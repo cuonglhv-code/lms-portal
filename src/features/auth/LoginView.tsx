@@ -7,8 +7,6 @@ import {
   GraduationCap, 
   Users 
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthProvider';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 
@@ -18,28 +16,27 @@ interface LoginViewProps {
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onEmailLogin, onGoogleLogin }) => {
-  const navigate = useNavigate();
-  const { signIn } = useAuth();
-  
   const [adminEmail, setAdminEmail] = useState('cuonglhv@jaxtina.com');
   const [adminPassword, setAdminPassword] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
   const [studentPassword, setStudentPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [role, setRole] = useState<'admin' | 'teacher' | 'student' | null>(null);
+  const [loading, setLoading] = useState<'admin' | 'teacher' | 'student' | null>(null);
 
-  const handleAdminLogin = async () => {
+  const handleLogin = async (type: 'admin' | 'teacher' | 'student', email: string, password: string) => {
     setLoginError(null);
+    setLoading(type);
     try {
-      await signIn(adminEmail, adminPassword);
-      navigate('/admin');
+      await onEmailLogin(email, password);
     } catch (err: any) {
       setLoginError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(null);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
       <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Admin Login Card */}
         <Card className="p-8 text-center flex flex-col items-center hover:shadow-xl transition-all duration-300 border-t-4 border-purple-600">
@@ -66,17 +63,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onEmailLogin, onGoogleLogi
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="password"
-                placeholder="Admin Password"
+                placeholder="Password"
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
               />
             </div>
-            {loginError && role === 'admin' && (
+            {loginError && (
               <p className="text-xs text-red-500 mt-1">{loginError}</p>
             )}
             <Button 
-              onClick={() => { setRole('admin'); handleAdminLogin(); }} 
+              onClick={() => handleLogin('admin', adminEmail, adminPassword)}
+              loading={loading === 'admin'}
               className="w-full py-3 text-sm bg-purple-600 hover:bg-purple-700 border-none"
             >
               <LogIn className="w-4 h-4 mr-2" />
@@ -91,11 +89,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onEmailLogin, onGoogleLogi
           </div>
 
           <Button 
-            variant="secondary"
+            variant="outline"
             onClick={() => onGoogleLogin('admin')} 
             className="w-full py-3 text-sm"
           >
-            <LogIn className="w-4 h-4 mr-2" />
             Login with Google
           </Button>
         </Card>
@@ -109,7 +106,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onEmailLogin, onGoogleLogi
           <p className="text-gray-600 mb-8 flex-1">
             Access the management dashboard to manage classes, students, and academic reports.
           </p>
-          <Button onClick={() => onGoogleLogin('teacher')} className="w-full py-4 text-lg bg-indigo-600 hover:bg-indigo-700">
+          <Button 
+            onClick={() => onGoogleLogin('teacher')} 
+            className="w-full py-4 text-lg bg-indigo-600 hover:bg-indigo-700"
+          >
             <LogIn className="w-5 h-5 mr-2" />
             Login as Teacher
           </Button>
@@ -130,7 +130,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onEmailLogin, onGoogleLogi
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="email"
-                placeholder="Registered Email"
+                placeholder="Student Email"
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
                 value={studentEmail}
                 onChange={(e) => setStudentEmail(e.target.value)}
@@ -146,19 +146,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onEmailLogin, onGoogleLogi
                 onChange={(e) => setStudentPassword(e.target.value)}
               />
             </div>
-            {loginError && role === 'student' && (
+            {loginError && (
               <p className="text-xs text-red-500 mt-1">{loginError}</p>
             )}
             <Button 
-              onClick={async () => {
-                setRole('student');
-                setLoginError(null);
-                try {
-                  await onEmailLogin(studentEmail, studentPassword);
-                } catch (err: any) {
-                  setLoginError(err.message || 'Login failed.');
-                }
-              }} 
+              onClick={() => handleLogin('student', studentEmail, studentPassword)}
+              loading={loading === 'student'}
               className="w-full py-3 text-sm bg-emerald-600 hover:bg-emerald-700 border-none"
             >
               <LogIn className="w-4 h-4 mr-2" />
@@ -173,11 +166,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onEmailLogin, onGoogleLogi
           </div>
 
           <Button 
-            variant="secondary"
+            variant="outline"
             onClick={() => onGoogleLogin('student')} 
             className="w-full py-3 text-sm"
           >
-            <LogIn className="w-4 h-4 mr-2" />
             Login with Google
           </Button>
         </Card>
