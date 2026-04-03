@@ -30,56 +30,6 @@ export function useStudentHomework(studentId: string | null) {
       return;
     }
 
-    let channel: any = null;
-
-    const setupRealtime = () => {
-      channel = supabase
-        .channel('homework-submissions-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'homework_submissions',
-            filter: `student_id=eq.${studentId}`,
-          },
-          async (payload: any) => {
-            const fetchHomework = async () => {
-              const { data } = await supabase
-                .from('homework_submissions')
-                .select(`
-                  *,
-                  homework:homework!homework_submissions_homework_id_fkey (
-                    id,
-                    title,
-                    description,
-                    due_date,
-                    class_id,
-                    class:classes!homework_class_id_fkey (name)
-                  )
-                `)
-                .eq('student_id', studentId)
-                .order('submitted_at', { ascending: false });
-              return data;
-            };
-
-            const data = await fetchHomework();
-            if (data) {
-              setHomework(data.map((h) => ({
-                ...h,
-                homework_id: h.homework?.id,
-                class_id: h.homework?.class_id,
-                title: h.homework?.title,
-                description: h.homework?.description,
-                due_date: h.homework?.due_date,
-                class_name: h.homework?.class?.name,
-              })));
-            }
-          }
-        )
-        .subscribe();
-    };
-
     const fetchHomework = async () => {
       try {
         const { data, error: fetchError } = await supabase
@@ -118,13 +68,6 @@ export function useStudentHomework(studentId: string | null) {
     };
 
     fetchHomework();
-    setupRealtime();
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
   }, [studentId]);
 
   return { homework, loading, error };

@@ -23,26 +23,6 @@ export function useStudentAttendance(studentId: string | null) {
       return;
     }
 
-    let channel: any = null;
-
-    const setupRealtime = () => {
-      channel = supabase
-        .channel('attendance-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'attendance',
-            filter: `student_id=eq.${studentId}`,
-          },
-          () => {
-            fetchAttendance();
-          }
-        )
-        .subscribe();
-    };
-
     const fetchAttendance = async () => {
       try {
         const { data, error: fetchError } = await supabase
@@ -65,13 +45,6 @@ export function useStudentAttendance(studentId: string | null) {
     };
 
     fetchAttendance();
-    setupRealtime();
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
   }, [studentId]);
 
   return { attendance, loading, error };

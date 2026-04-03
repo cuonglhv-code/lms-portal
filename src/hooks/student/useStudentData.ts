@@ -70,34 +70,6 @@ export function useStudentEnrollments(studentId: string | null) {
       return;
     }
 
-    let channel: any = null;
-
-    const setupRealtime = () => {
-      channel = supabase
-        .channel('enrollment-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'student_classes',
-            filter: `student_id=eq.${studentId}`,
-          },
-          async (payload: any) => {
-            if (payload.eventType === 'INSERT') {
-              setEnrollments((prev) => [{ ...payload.new, id: payload.new.id }, ...prev]);
-            } else if (payload.eventType === 'UPDATE') {
-              setEnrollments((prev) =>
-                prev.map((e) => (e.id === payload.new.id ? { ...e, ...payload.new } : e))
-              );
-            } else if (payload.eventType === 'DELETE') {
-              setEnrollments((prev) => prev.filter((e) => e.id !== payload.old.id));
-            }
-          }
-        )
-        .subscribe();
-    };
-
     const fetchEnrollments = async () => {
       try {
         const { data, error: fetchError } = await supabase
@@ -117,13 +89,6 @@ export function useStudentEnrollments(studentId: string | null) {
     };
 
     fetchEnrollments();
-    setupRealtime();
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
   }, [studentId]);
 
   return { enrollments, loading, error };

@@ -32,26 +32,6 @@ export function useStudentExams(studentId: string | null) {
       return;
     }
 
-    let channel: any = null;
-
-    const setupRealtime = () => {
-      channel = supabase
-        .channel('exam-scores-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'exam_scores',
-            filter: `student_id=eq.${studentId}`,
-          },
-          () => {
-            fetchExams();
-          }
-        )
-        .subscribe();
-    };
-
     const fetchExams = async () => {
       try {
         const { data, error: fetchError } = await supabase
@@ -81,13 +61,6 @@ export function useStudentExams(studentId: string | null) {
     };
 
     fetchExams();
-    setupRealtime();
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
   }, [studentId]);
 
   return { exams, loading, error };

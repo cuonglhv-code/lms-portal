@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../supabase';
 
 interface Announcement {
@@ -30,33 +30,12 @@ export function useStudentAnnouncements(studentId: string | null, classIds: stri
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
-    let channel: any = null;
-
-    const setupRealtime = () => {
-      channel = supabase
-        .channel('announcements-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: 'message_type=eq.announcement',
-          },
-          () => {
-            fetchAnnouncements();
-          }
-        )
-        .subscribe();
-    };
-
     const fetchAnnouncements = async () => {
       try {
-        const conditions = ['message_type.eq.announcement'];
-
-        conditions.push('(recipient_type.eq.all');
+        const conditions = ['message_type.eq.announcement', '(recipient_type.eq.all'];
 
         if (studentId) {
           conditions.push(`,recipient_type.eq.student,recipient_id.eq.${studentId}`);
@@ -86,13 +65,8 @@ export function useStudentAnnouncements(studentId: string | null, classIds: stri
     };
 
     fetchAnnouncements();
-    setupRealtime();
 
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
+    return () => {};
   }, [studentId, classIds.join(',')]);
 
   return { announcements, loading, error };
@@ -110,31 +84,7 @@ export function useStudentMessages(studentId: string | null) {
       return;
     }
 
-    let channel: any = null;
-
-    const setupRealtime = () => {
-      channel = supabase
-        .channel('messages-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'messages',
-            filter: `recipient_id=eq.${studentId}`,
-          },
-          (payload: any) => {
-            if (payload.eventType === 'INSERT') {
-              setMessages((prev) => [payload.new, ...prev]);
-            } else if (payload.eventType === 'UPDATE') {
-              setMessages((prev) =>
-                prev.map((m) => (m.id === payload.new.id ? { ...m, ...payload.new } : m))
-              );
-            }
-          }
-        )
-        .subscribe();
-    };
+    let isSubscribed = true;
 
     const fetchMessages = async () => {
       try {
@@ -147,22 +97,25 @@ export function useStudentMessages(studentId: string | null) {
           .limit(100);
 
         if (fetchError) throw fetchError;
-        setMessages(data || []);
+        if (isSubscribed) {
+          setMessages(data || []);
+        }
       } catch (err) {
         console.error('Error fetching messages:', err);
-        setError(err as Error);
+        if (isSubscribed) {
+          setError(err as Error);
+        }
       } finally {
-        setLoading(false);
+        if (isSubscribed) {
+          setLoading(false);
+        }
       }
     };
 
     fetchMessages();
-    setupRealtime();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      isSubscribed = false;
     };
   }, [studentId]);
 
