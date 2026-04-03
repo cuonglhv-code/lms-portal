@@ -1,0 +1,5 @@
+{
+  "name": "Teacher Portal",
+  "description": "A portal for teachers to manage student attendance, homework, and exam scores with export capabilities.",
+  "requestFramePermissions": []
+}
