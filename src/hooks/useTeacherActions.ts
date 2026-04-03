@@ -57,6 +57,38 @@ export function useTeacherActions() {
   const deleteMessage = useCallback((id: string) => 
     dbService.deleteMessage(id, userId, userRole), [userId, userRole]);
 
+  const importStudentsBatch = useCallback(async (students: Array<{ name: string; email: string; phone?: string; entryLevel?: string; targetOutcome?: string }>) => {
+    for (const s of students) {
+      await dbService.addStudent(s, userId, userRole);
+    }
+  }, [userId, userRole]);
+
+  const importClassesBatch = useCallback(async (classes: Array<{ name: string; center?: string; teacher?: string; totalSessions?: number; startingLevel?: string; startDate?: string; startTime?: string; endTime?: string; classDays?: string[]; targetOutcome?: number; sessionsPerWeek?: number }>) => {
+    for (const c of classes) {
+      await dbService.addClass({
+        name: c.name,
+        center: c.center || '',
+        teacher: c.teacher || '',
+        totalSessions: c.totalSessions || 30,
+        startingLevel: c.startingLevel || '',
+        startDate: c.startDate || '',
+        startTime: c.startTime || '',
+        endTime: c.endTime || '',
+        classDays: c.classDays || [],
+        sessionsPerWeek: c.sessionsPerWeek || 2,
+        targetOutcome: c.targetOutcome || 0,
+        lessonPlan: [],
+        notes: '',
+      }, userId, userRole);
+    }
+  }, [userId, userRole]);
+
+  const importLessonsBatch = useCallback(async (lessons: Array<{ classId: string; sessionNumber: number; date: string; content: string; homework?: string; isExam?: boolean }>) => {
+    for (const lesson of lessons) {
+      await dbService.addLesson(lesson, userId, userRole);
+    }
+  }, [userId, userRole]);
+
   return {
     addStudent,
     updateStudent,
@@ -72,6 +104,9 @@ export function useTeacherActions() {
     addAnnouncement,
     deleteAnnouncement,
     addMessage,
-    deleteMessage
+    deleteMessage,
+    importStudentsBatch,
+    importClassesBatch,
+    importLessonsBatch,
   };
 }

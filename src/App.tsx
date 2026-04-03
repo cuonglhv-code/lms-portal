@@ -79,7 +79,8 @@ function MainApp() {
     enrollStudent, unenrollStudent,
     updateAttendance, updateHomework, updateExamScore,
     addAnnouncement, deleteAnnouncement,
-    addMessage, deleteMessage
+    addMessage, deleteMessage,
+    importStudentsBatch, importClassesBatch, importLessonsBatch,
   } = useTeacherActions();
 
   // UI State
@@ -313,7 +314,13 @@ function MainApp() {
               )}
 
               {activeTab === 'import' && (
-                <ImportSection onImport={addStudent} existingStudents={students} />
+                <ImportSection 
+                  onImportStudents={importStudentsBatch}
+                  onImportLessons={importLessonsBatch}
+                  onImportClasses={importClassesBatch}
+                  existingStudents={students.map(s => ({ id: s.id, email: s.email || '', name: s.name }))}
+                  existingClasses={classes.map(c => ({ id: c.id, name: c.name }))}
+                />
               )}
 
               {activeTab === 'export' && (

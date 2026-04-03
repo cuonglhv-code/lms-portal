@@ -278,5 +278,21 @@ export const dbService = {
       console.error('Error deleting message:', error);
       throw error;
     }
+  },
+
+  async addLesson(data: { classId: string; sessionNumber: number; date: string; content: string; homework?: string; isExam?: boolean }, userId: string, role: UserRole) {
+    const { error } = await supabaseAdmin.from('sessions').insert({
+      class_id: data.classId,
+      title: `Session ${data.sessionNumber}`,
+      content: data.content,
+      session_date: data.date,
+      notes: data.homework || null,
+      created_by: userId,
+    });
+
+    if (error) {
+      console.error('Error adding lesson:', error);
+      throw error;
+    }
   }
 };
