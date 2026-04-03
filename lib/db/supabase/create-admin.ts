@@ -1,7 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-const supabaseUrl = 'https://psfeixnxxjmnpsgnkuhy.supabase.co';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZmVpeG54eGptbnBzZ25rdWh5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTI0NTkyNiwiZXhwIjoyMDkwODIxOTI2fQ.KxUkNMaqxD68nQ8DN-4_iCCmUS9sMA00yIbSLj_BVAI';
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Error: Missing Supabase credentials.');
+  console.error('Set VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
