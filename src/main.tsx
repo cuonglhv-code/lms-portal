@@ -1,33 +1,47 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
-import DemoApp from './DemoApp.tsx';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
-import { isConfigured } from './supabase';
 
-const useDemoMode = !isConfigured || import.meta.env.VITE_DEMO_MODE === 'true';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const demoMode = !supabaseUrl || !supabaseAnonKey || import.meta.env.VITE_DEMO_MODE === 'true';
 
-const RootApp = useDemoMode ? DemoApp : App;
+console.log('[App] Starting...');
+console.log('[App] VITE_SUPABASE_URL:', supabaseUrl ? 'set' : 'NOT SET');
+console.log('[App] VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'set' : 'NOT SET');
+console.log('[App] Demo mode:', demoMode);
 
-console.log('[App] Starting in', useDemoMode ? 'demo' : 'production', 'mode');
-console.log('[App] Supabase configured:', isConfigured);
-
-function LoadingFallback() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading...</p>
-      </div>
-    </div>
-  );
+if (demoMode) {
+  console.log('[App] Loading DemoApp...');
+  import('./DemoApp.tsx').then(({ default: DemoApp }) => {
+    console.log('[App] DemoApp loaded, rendering...');
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <DemoApp />
+      </StrictMode>,
+    );
+    console.log('[App] DemoApp rendered');
+  }).catch((err) => {
+    console.error('[App] Failed to load DemoApp:', err);
+    document.getElementById('root')!.innerHTML = '<div style="padding:20px;color:red;">Failed to load app</div>';
+  });
+} else {
+  console.log('[App] Loading App...');
+  Promise.all([
+    import('./App.tsx'),
+    import('./components/ErrorBoundary.tsx'),
+  ]).then(([{ default: App }, { ErrorBoundary }]) => {
+    console.log('[App] App loaded, rendering...');
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </StrictMode>,
+    );
+    console.log('[App] App rendered');
+  }).catch((err) => {
+    console.error('[App] Failed to load App:', err);
+    document.getElementById('root')!.innerHTML = '<div style="padding:20px;color:red;">Failed to load app</div>';
+  });
 }
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ErrorBoundary fallback={<LoadingFallback />}>
-      <RootApp />
-    </ErrorBoundary>
-  </StrictMode>,
-);
