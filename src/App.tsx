@@ -103,10 +103,6 @@ function MainApp() {
     await signIn(email, pass);
   };
 
-  const handleGoogleLogin = async (_intendedRole: 'teacher' | 'student' | 'admin') => {
-    // Google login handled by Supabase OAuth
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -116,7 +112,7 @@ function MainApp() {
   }
 
   if (!user) {
-    return <LoginView onEmailLogin={handleEmailLogin} onGoogleLogin={handleGoogleLogin} />;
+    return <LoginView onEmailLogin={handleEmailLogin} />;
   }
 
   if (role === UserRole.Student) {

@@ -5,173 +5,120 @@ import {
   Lock, 
   LogIn, 
   GraduationCap, 
-  Users 
+  Users,
+  AlertCircle 
 } from 'lucide-react';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 
 interface LoginViewProps {
   onEmailLogin: (email: string, pass: string) => Promise<void>;
-  onGoogleLogin: (role: 'teacher' | 'student' | 'admin') => Promise<void>;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onEmailLogin, onGoogleLogin }) => {
-  const [adminEmail, setAdminEmail] = useState('cuonglhv@jaxtina.com');
-  const [adminPassword, setAdminPassword] = useState('');
-  const [studentEmail, setStudentEmail] = useState('');
-  const [studentPassword, setStudentPassword] = useState('');
+export const LoginView: React.FC<LoginViewProps> = ({ onEmailLogin }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<'admin' | 'teacher' | 'student' | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (type: 'admin' | 'teacher' | 'student', email: string, password: string) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoginError(null);
-    setLoading(type);
+    setLoading(true);
     try {
       await onEmailLogin(email, password);
     } catch (err: any) {
       setLoginError(err.message || 'Login failed. Please check your credentials.');
     } finally {
-      setLoading(null);
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
-      <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Admin Login Card */}
-        <Card className="p-8 text-center flex flex-col items-center hover:shadow-xl transition-all duration-300 border-t-4 border-purple-600">
-          <div className="bg-purple-100 w-20 h-20 rounded-2xl flex items-center justify-center mb-6">
-            <Shield className="w-10 h-10 text-purple-600" />
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="bg-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <GraduationCap className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Portal</h1>
-          <p className="text-gray-600 mb-6 flex-1">
-            Access system administration to manage users and platform settings.
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">Jaxtina Portal</h1>
+          <p className="text-gray-500 mt-2">Sign in to continue</p>
+        </div>
 
-          <div className="w-full space-y-4 mb-6">
-            <div className="relative text-left">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="email"
-                placeholder="Admin Email"
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
-              />
-            </div>
-            <div className="relative text-left">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="password"
-                placeholder="Password"
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-              />
-            </div>
+        {/* Login Card */}
+        <Card className="p-8">
+          <form onSubmit={handleLogin} className="space-y-6">
             {loginError && (
-              <p className="text-xs text-red-500 mt-1">{loginError}</p>
+              <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{loginError}</span>
+              </div>
             )}
-            <Button 
-              onClick={() => handleLogin('admin', adminEmail, adminPassword)}
-              loading={loading === 'admin'}
-              className="w-full py-3 text-sm bg-purple-600 hover:bg-purple-700 border-none"
-            >
-              <LogIn className="w-4 h-4 mr-2" />
-              Login with Email
-            </Button>
-          </div>
 
-          <div className="w-full flex items-center gap-4 mb-4">
-            <div className="h-px bg-gray-200 flex-1"></div>
-            <span className="text-xs text-gray-400 font-medium">OR</span>
-            <div className="h-px bg-gray-200 flex-1"></div>
-          </div>
-
-          <Button 
-            variant="outline"
-            onClick={() => onGoogleLogin('admin')} 
-            className="w-full py-3 text-sm"
-          >
-            Login with Google
-          </Button>
-        </Card>
-
-        {/* Teacher Login Card */}
-        <Card className="p-8 text-center flex flex-col items-center hover:shadow-xl transition-all duration-300 border-t-4 border-indigo-600">
-          <div className="bg-indigo-100 w-20 h-20 rounded-2xl flex items-center justify-center mb-6">
-            <GraduationCap className="w-10 h-10 text-indigo-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Teacher Portal</h1>
-          <p className="text-gray-600 mb-8 flex-1">
-            Access the management dashboard to manage classes, students, and academic reports.
-          </p>
-          <Button 
-            onClick={() => onGoogleLogin('teacher')} 
-            className="w-full py-4 text-lg bg-indigo-600 hover:bg-indigo-700"
-          >
-            <LogIn className="w-5 h-5 mr-2" />
-            Login as Teacher
-          </Button>
-        </Card>
-
-        {/* Student Login Card */}
-        <Card className="p-8 text-center flex flex-col items-center hover:shadow-xl transition-all duration-300 border-t-4 border-emerald-600">
-          <div className="bg-emerald-100 w-20 h-20 rounded-2xl flex items-center justify-center mb-6">
-            <Users className="w-10 h-10 text-emerald-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Student Portal</h1>
-          <p className="text-gray-600 mb-6 flex-1">
-            View your enrolled classes, check homework assignments, and see exam results.
-          </p>
-          
-          <div className="w-full space-y-4 mb-6">
-            <div className="relative text-left">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="email"
-                placeholder="Student Email"
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
-                value={studentEmail}
-                onChange={(e) => setStudentEmail(e.target.value)}
-              />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  required
+                />
+              </div>
             </div>
-            <div className="relative text-left">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="password"
-                placeholder="Password"
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
-                value={studentPassword}
-                onChange={(e) => setStudentPassword(e.target.value)}
-              />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  required
+                />
+              </div>
             </div>
-            {loginError && (
-              <p className="text-xs text-red-500 mt-1">{loginError}</p>
-            )}
-            <Button 
-              onClick={() => handleLogin('student', studentEmail, studentPassword)}
-              loading={loading === 'student'}
-              className="w-full py-3 text-sm bg-emerald-600 hover:bg-emerald-700 border-none"
-            >
-              <LogIn className="w-4 h-4 mr-2" />
-              Login with Email
+
+            <Button type="submit" loading={loading} className="w-full py-3 text-base">
+              <LogIn className="w-5 h-5 mr-2" />
+              Sign In
             </Button>
-          </div>
+          </form>
 
-          <div className="w-full flex items-center gap-4 mb-4">
-            <div className="h-px bg-gray-200 flex-1"></div>
-            <span className="text-xs text-gray-400 font-medium">OR</span>
-            <div className="h-px bg-gray-200 flex-1"></div>
+          {/* Quick Access */}
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <p className="text-sm text-gray-500 text-center mb-3">Quick access:</p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setEmail('cuonglhv@jaxtina.com')}
+                className="px-3 py-2 text-xs bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors font-medium"
+              >
+                Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmail('sarah.chen@jaxtina.com')}
+                className="px-3 py-2 text-xs bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors font-medium"
+              >
+                Teacher
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmail('j.thompson@email.com')}
+                className="px-3 py-2 text-xs bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors font-medium"
+              >
+                Student
+              </button>
+            </div>
           </div>
-
-          <Button 
-            variant="outline"
-            onClick={() => onGoogleLogin('student')} 
-            className="w-full py-3 text-sm"
-          >
-            Login with Google
-          </Button>
         </Card>
       </div>
     </div>

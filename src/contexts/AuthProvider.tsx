@@ -133,37 +133,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [detectRole]);
 
   useEffect(() => {
-    setLoading(true);
+    let subscription: { unsubscribe: () => void } | null = null;
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[Auth] Auth event:', event);
-      
-      if (session?.user) {
-        console.log('[Auth] User signed in:', session.user.email);
-        setUser(session.user as SupabaseUser);
-        setSession(session);
-        await detectRole(session.user as SupabaseUser);
-      } else {
-        console.log('[Auth] User signed out');
-        setUser(null);
-        setSession(null);
-        setRole(null);
-      }
-      setLoading(false);
-    });
+    const initAuth = async () => {
+      try {
+        setLoading(true);
+        
+        // Set up auth state listener
+        const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('[Auth] Auth event:', event);
+          
+          if (session?.user) {
+            console.log('[Auth] User signed in:', session.user.email);
+            setUser(session.user as SupabaseUser);
+            setSession(session);
+            await detectRole(session.user as SupabaseUser);
+          } else {
+            console.log('[Auth] User signed out');
+            setUser(null);
+            setSession(null);
+            setRole(null);
+          }
+          setLoading(false);
+        });
 
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      if (initialSession?.user) {
-        setUser(initialSession.user as SupabaseUser);
-        setSession(initialSession);
-        detectRole(initialSession.user as SupabaseUser).finally(() => setLoading(false));
-      } else {
+        subscription = data.subscription;
+
+        // Get initial session
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (sessionData?.session?.user) {
+          setUser(sessionData.session.user as SupabaseUser);
+          setSession(sessionData.session);
+          await detectRole(sessionData.session.user as SupabaseUser);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('[Auth] Auth initialization error:', error);
         setLoading(false);
       }
-    });
+    };
+
+    initAuth();
 
     return () => {
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, [detectRole]);
 
