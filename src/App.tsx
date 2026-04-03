@@ -59,7 +59,7 @@ import { Class, Tab } from './types/models';
 import { UserRole } from './types/auth';
 
 function MainApp() {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, signIn, signOut } = useAuth();
   const navigate = useNavigate();
 
   // Data Hooks
@@ -95,16 +95,16 @@ function MainApp() {
   });
 
   const handleLogout = async () => {
-    await useAuth().signOut();
+    await signOut();
     navigate('/');
   };
 
   const handleEmailLogin = async (email: string, pass: string) => {
-    await useAuth().signIn(email, pass);
+    await signIn(email, pass);
   };
 
-  const handleGoogleLogin = async (intendedRole: 'teacher' | 'student' | 'admin') => {
-    localStorage.setItem('intendedRole', intendedRole);
+  const handleGoogleLogin = async (_intendedRole: 'teacher' | 'student' | 'admin') => {
+    // Google login handled by Supabase OAuth
   };
 
   if (loading) {
