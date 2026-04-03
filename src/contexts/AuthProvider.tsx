@@ -101,14 +101,21 @@ async function detectUserRole(supabaseUser: SupabaseUser): Promise<UserRole> {
 
 async function upsertUserRecord(supabaseUser: SupabaseUser, role: UserRole) {
   try {
-    await supabase.from('users').upsert({
+    const displayName = supabaseUser.user_metadata?.display_name || 
+      (supabaseUser.email ? supabaseUser.email.split('@')[0] : 'User');
+    
+    const { error } = await supabase.from('users').upsert({
       auth_id: supabaseUser.id,
       email: supabaseUser.email,
-      display_name: supabaseUser.user_metadata?.display_name || supabaseUser.email?.split('@')[0],
+      display_name: displayName,
       role: role === UserRole.Admin ? 'admin' : role === UserRole.Student ? 'student' : 'teacher',
       last_login: new Date().toISOString(),
       status: 'active',
     }, { onConflict: 'auth_id' });
+    
+    if (error && error.code !== '23505') {
+      console.error('[Auth] Failed to upsert user record:', error);
+    }
   } catch (error) {
     console.error('[Auth] Failed to upsert user record:', error);
   }

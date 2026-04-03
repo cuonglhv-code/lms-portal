@@ -31,8 +31,17 @@ interface DashboardSectionProps {
   enrollments: Enrollment[];
   attendance: Attendance[];
   homework: Homework[];
-  exams: ExamScore[];
+  exams: any[];
   onViewClass: (id: string) => void;
+}
+
+function getExamAverage(exam: any): number {
+  if (exam.writing !== undefined && exam.reading !== undefined) {
+    return (exam.writing + exam.reading + (exam.speaking || 0) + (exam.listening || 0)) / 4;
+  }
+  if (exam.score !== undefined) return exam.score;
+  if (exam.percentage !== undefined) return exam.percentage;
+  return 0;
 }
 
 export const DashboardSection: React.FC<DashboardSectionProps> = ({ 
@@ -92,7 +101,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
       
       const sExams = e.filter(exam => exam.studentId === student.id);
       const sAvgScore = sExams.length > 0 
-        ? sExams.reduce((acc, curr) => acc + (curr.writing + curr.reading + curr.speaking + curr.listening) / 4, 0) / sExams.length
+        ? sExams.reduce((acc, curr) => acc + getExamAverage(curr), 0) / sExams.length
         : 10;
 
       return sAttRate < 0.7 || sAvgScore < 5.0;
@@ -115,7 +124,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
       const studentExams = e.filter(exam => exam.studentId === student.id);
       if (studentExams.length === 0) return;
 
-      const avgScore = studentExams.reduce((acc, curr) => acc + (curr.writing + curr.reading + curr.speaking + curr.listening) / 4, 0) / studentExams.length;
+      const avgScore = studentExams.reduce((acc, curr) => acc + getExamAverage(curr), 0) / studentExams.length;
       const target = studentClass.targetOutcome;
 
       if (avgScore > target) {
@@ -183,14 +192,14 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
 
               const classExams = filteredData.exams.filter(e => studentIds.includes(e.studentId));
               const avgScore = classExams.length > 0 
-                ? Math.round(classExams.reduce((acc, curr) => acc + (curr.writing + curr.reading + curr.speaking + curr.listening) / 4, 0) / classExams.length * 10) / 10
+                ? Math.round(classExams.reduce((acc, curr) => acc + getExamAverage(curr), 0) / classExams.length * 10) / 10
                 : 0;
 
               const classProgress = { above: 0, onTrack: 0, behind: 0 };
               classEnrollments.forEach(en => {
                 const sExams = filteredData.exams.filter(ex => ex.studentId === en.studentId);
                 if (sExams.length === 0) return;
-                const sAvg = sExams.reduce((acc, curr) => acc + (curr.writing + curr.reading + curr.speaking + curr.listening) / 4, 0) / sExams.length;
+                const sAvg = sExams.reduce((acc, curr) => acc + getExamAverage(curr), 0) / sExams.length;
                 if (sAvg > c.targetOutcome) classProgress.above++;
                 else if (sAvg >= c.targetOutcome - 0.5) classProgress.onTrack++;
                 else classProgress.behind++;
@@ -332,7 +341,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
               const sAttRate = sAtt.length > 0 ? Math.round((sAtt.filter(a => a.status === 'present' || a.status === 'late').length / sAtt.length) * 100) : 100;
               const sExams = exams.filter(e => e.studentId === s.id);
               const sAvgScore = sExams.length > 0 
-                ? (sExams.reduce((acc, curr) => acc + (curr.writing + curr.reading + curr.speaking + curr.listening) / 4, 0) / sExams.length).toFixed(1)
+                ? (sExams.reduce((acc, curr) => acc + getExamAverage(curr), 0) / sExams.length).toFixed(1)
                 : 'N/A';
 
               return (
