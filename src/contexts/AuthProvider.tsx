@@ -57,13 +57,13 @@ async function detectUserRole(supabaseUser: SupabaseUser): Promise<UserRole> {
   }
   
   try {
-    const { data: student } = await supabase
+    const { data: student, error: studentError } = await supabase
       .from('students')
       .select('id')
       .eq('email', email)
-      .single();
+      .maybeSingle();
     
-    if (student) {
+    if (student && !studentError) {
       return UserRole.Student;
     }
   } catch (error) {
@@ -71,13 +71,16 @@ async function detectUserRole(supabaseUser: SupabaseUser): Promise<UserRole> {
   }
   
   try {
-    const { data: teacherUser } = await supabase
+    const { data: teacherUser, error: teacherError } = await supabase
       .from('users')
       .select('role')
       .eq('auth_id', supabaseUser.id)
-      .single();
+      .maybeSingle();
     
-    if (teacherUser?.role === 'admin') return UserRole.Admin;
+    if (teacherUser && !teacherError) {
+      if (teacherUser.role === 'admin') return UserRole.Admin;
+      if (teacherUser.role === 'teacher') return UserRole.Teacher;
+    }
   } catch (error) {
     console.log('[Auth] Could not check users table:', error);
   }
