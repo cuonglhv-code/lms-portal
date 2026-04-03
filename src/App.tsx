@@ -124,6 +124,10 @@ function MainApp() {
     );
   }
 
+  if (role === UserRole.Admin) {
+    return <AdminPortal />;
+  }
+
   const selectedClass = classes.find(c => c.id === selectedClassId);
 
   const teacherNavItems = [

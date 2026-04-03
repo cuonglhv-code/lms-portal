@@ -120,11 +120,11 @@ CREATE POLICY "Service role can manage users"
 -- STUDENTS POLICIES
 -- =============================================
 
--- Students can view own profile
+-- Students can view own profile (match by email in JWT)
 DROP POLICY IF EXISTS "Students can view own profile" ON students;
 CREATE POLICY "Students can view own profile"
   ON students FOR SELECT
-  USING (auth_id = auth.uid());
+  USING (email = auth.jwt()->>'email');
 
 -- Teachers can view enrolled students
 DROP POLICY IF EXISTS "Teachers can view enrolled students" ON students;
