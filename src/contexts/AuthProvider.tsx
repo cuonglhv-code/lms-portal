@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from '../supabase';
+import { supabase, isConfigured } from '../supabase';
 import { UserRole } from '../types/auth';
 import { hasPermission, Permission } from '../utils/permissions';
 
@@ -30,7 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   role: null,
-  loading: true,
+  loading: false,
   signIn: async () => {},
   signOut: async () => {},
   signUp: async () => {},
@@ -43,6 +43,17 @@ const ADMIN_EMAILS = new Set([
   'cuonglhv@jaxtina.com',
   'lecuong.ueh@gmail.com',
 ]);
+
+const AUTH_TIMEOUT_MS = 5000;
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => 
+      setTimeout(() => reject(new Error('Auth timeout')), timeoutMs)
+    )
+  ]).catch(() => fallback);
+}
 
 async function detectUserRole(supabaseUser: SupabaseUser): Promise<UserRole> {
   const email = supabaseUser.email?.toLowerCase() || '';
@@ -136,13 +147,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [detectRole]);
 
   useEffect(() => {
+    if (!isConfigured) {
+      console.log('[Auth] Supabase not configured, skipping auth initialization');
+      setLoading(false);
+      return;
+    }
+
     let subscription: { unsubscribe: () => void } | null = null;
     
     const initAuth = async () => {
       try {
         setLoading(true);
         
-        // Set up auth state listener
         const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log('[Auth] Auth event:', event);
           
@@ -162,8 +178,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         subscription = data.subscription;
 
-        // Get initial session
-        const { data: sessionData } = await supabase.auth.getSession();
+        const { data: sessionData } = await withTimeout(
+          supabase.auth.getSession(),
+          AUTH_TIMEOUT_MS,
+          { data: { session: null }, error: null }
+        );
         
         if (sessionData?.session?.user) {
           setUser(sessionData.session.user as SupabaseUser);
