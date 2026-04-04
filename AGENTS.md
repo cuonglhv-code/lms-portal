@@ -35,15 +35,16 @@
 **✅ Built & Deployed**:
 - Repository: https://github.com/cuonglhv-code/lms-portal
 - Vercel: https://lms-portal-blue.vercel.app/
-- Database schema: 12 tables + indexes
+- Database schema: 12 tables + indexes (with entry_level, target_outcome, class fields)
 - Seed data: Admin + 4 teachers + 10 students
 - Auth: Login/logout with role detection (admin/teacher/student)
 - UI: Shared components (Button, Card, DataTable, StatCard, Badge)
 - Layout: AppHeader, Sidebar, PageContainer, PageHeader
-- Teacher portal sections: Dashboard, Classes, Students, Attendance, Homework, Exams, Communication, Reports, Import, Export
+- Teacher portal sections: Dashboard, Classes, Students, Attendance, Homework, Exams, Communication, Reports, Export
 - Student portal: Dashboard, Classes, Homework, Exams, Progress, Communication
 - Admin portal: Dashboard, Users, Classes, Centers, Analytics, Reports, Messaging
-- CSV import: Students, Lesson Plans, Classes (with preview)
+- CSV import: Embedded in Students section (students) and Classes section (lessons, classes)
+- Data mapping: Hooks transform DB snake_case → frontend camelCase
 
 **⚠️ Known Issues**:
 1. **Environment variables** — Vercel deployment requires:
@@ -51,14 +52,13 @@
    - `VITE_SUPABASE_ANON_KEY` = `[anon key from Supabase]`
    Without these, app shows blank page or infinite loading.
 
-2. **Data shape mismatch** — Some frontend models expect different fields than DB returns:
-   - Frontend: `exam.writing`, `exam.reading`, `exam.speaking`, `exam.listening`
-   - DB: `exam.score`, `exam.percentage`
-   - Fixed in DashboardSection with `getExamAverage()` helper
-
-3. **RLS policies** — Row Level Security enabled but causes 403/409 errors in development:
+2. **RLS policies** — Row Level Security enabled but causes 403/409 errors in development:
    - Quick fix: Disable RLS on all tables (run in Supabase SQL Editor)
    - Proper fix: Update policies to use email matching instead of auth_id
+
+3. **Missing DB columns** — Schema updated but need to run migration on production:
+   - `students.entry_level`, `students.target_outcome`
+   - `classes.starting_level`, `classes.target_outcome`, `classes.total_sessions`, etc.
 
 **✅ Test Accounts**:
 | Role | Email | Password |
@@ -146,6 +146,26 @@ ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
 - Teacher: sarah.chen@jaxtina.com / Jaxtina2026  
 - Student: j.thompson@email.com / Jaxtina2026
 
+## Data Flow
+
+### Database → Frontend
+```
+DB (snake_case) → useSubscribe → Hook transforms → Frontend (camelCase) → Section
+```
+
+Each `use*` hook transforms DB data:
+- `useStudents`: `display_name` → `name`, `entry_level` → `entryLevel`, etc.
+- `useClasses`: `total_sessions` → `totalSessions`, `class_days` → `classDays`, etc.
+- `useEnrollments`: `student_id` → `studentId`, `class_id` → `classId`, etc.
+- `useAttendance`: `student_id` → `studentId`, `class_id` → `classId`, etc.
+- `useHomework`: `student_id` → `studentId`, `class_id` → `classId`, `due_date` → `date`, etc.
+- `useExams`: `student_id` → `studentId`, `score` → `writing/reading/speaking/listening`, etc.
+
+### Frontend → Database
+```
+Section → useTeacherActions → dbService (camelCase → snake_case) → supabaseAdmin → DB
+```
+
 ## Token Saving Tips
 
 1. **Read AGENTS.md first** — gives you 80% context in <1 minute
@@ -154,4 +174,4 @@ ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
 4. **Leverage existing patterns** — copy/paste similar components/hooks
 5. **Ask for clarification** if unsure — better than guessing
 
-Last session ended with: CSV import feature built and pushed. Next step: Verify Vercel deployment has correct env vars, then test all three portals with test accounts.
+Last session ended with: Data flow fixed across all portals. CSV import moved to Students/Classes sections. Schema updated with missing columns. Build passes and pushed to GitHub. Next step: Run schema migration on production DB to add new columns, then test all three portals.

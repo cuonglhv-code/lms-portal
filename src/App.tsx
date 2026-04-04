@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   LayoutDashboard,
   Building2,
+  User,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
@@ -49,6 +50,7 @@ import { HomeworkSection } from './features/teacher/sections/HomeworkSection';
 import { ExamsSection } from './features/teacher/sections/ExamsSection';
 import { CommunicationSection } from './features/teacher/sections/CommunicationSection';
 import { ReportsSection } from './features/teacher/sections/ReportsSection';
+import { ProfileSection } from './features/teacher/sections/ProfileSection';
 import { ExportSection } from './features/teacher/sections/ExportSection';
 import { StudentApp } from './features/student/StudentApp';
 
@@ -138,6 +140,7 @@ function MainApp() {
     { id: 'exams', label: 'Exams', icon: GraduationCap },
     { id: 'communication', label: 'Communication', icon: HelpCircle },
     { id: 'reports', label: 'Reports', icon: FileSpreadsheet },
+    { id: 'profile', label: 'Profile', icon: User },
   ];
 
   const handleTabClick = (id: string) => {
@@ -311,6 +314,8 @@ function MainApp() {
                   exams={exams}
                 />
               )}
+
+              {activeTab === 'profile' && <ProfileSection />}
 
               {activeTab === 'export' && (
                 <ExportSection onExport={() => excelService.exportToExcel(students, classes, enrollments, attendance, homework, exams)} />

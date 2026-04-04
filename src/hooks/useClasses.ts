@@ -21,6 +21,7 @@ export function useClasses() {
     classDays: Array.isArray(cls.class_days) ? cls.class_days : [],
     targetOutcome: cls.target_outcome || 0,
     lessonPlan: Array.isArray(cls.lesson_plan) ? cls.lesson_plan : [],
+    examTypes: Array.isArray(cls.exam_types) ? cls.exam_types : [],
     description: cls.description || '',
     subject: cls.subject || '',
     gradeLevel: cls.grade_level || '',

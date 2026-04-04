@@ -9,6 +9,16 @@ export interface Student {
   createdAt: any;
 }
 
+export type ExamType = 'mock' | 'midterm' | 'final' | 'actual' | 'others';
+
+export const EXAM_TYPE_LABELS: Record<ExamType, string> = {
+  mock: 'Mock Test',
+  midterm: 'Mid-term Test',
+  final: 'Final Test',
+  actual: 'Actual Test',
+  others: 'Others',
+};
+
 export interface Class {
   id: string;
   name: string;
@@ -24,6 +34,7 @@ export interface Class {
   targetOutcome: number;
   sessionsPerWeek: number;
   lessonPlan: LessonSession[];
+  examTypes: ExamType[];
 }
 
 export interface LessonSession {
@@ -88,4 +99,4 @@ export interface Message {
   createdAt: any;
 }
 
-export type Tab = 'dashboard' | 'classes' | 'students' | 'attendance' | 'homework' | 'exams' | 'communication' | 'reports' | 'import' | 'export';
+export type Tab = 'dashboard' | 'classes' | 'students' | 'attendance' | 'homework' | 'exams' | 'communication' | 'reports' | 'profile' | 'export';

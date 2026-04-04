@@ -15,7 +15,7 @@ import { Button } from '../../../components/common/Button';
 import { Card } from '../../../components/common/Card';
 import { ImportDialog } from '../../../components/common/ImportDialog';
 import { cn } from '../../../utils/cn';
-import { Class, LessonSession } from '../../../types/models';
+import { Class, LessonSession, ExamType, EXAM_TYPE_LABELS } from '../../../types/models';
 
 interface ClassesSectionProps {
   classes: Class[];
@@ -61,6 +61,7 @@ export const ClassesSection: React.FC<ClassesSectionProps> = ({
     notes: '',
     targetOutcome: 0,
     startingLevel: '',
+    examTypes: [],
   };
 
   const [formData, setFormData] = useState<Omit<Class, 'id'>>(initialFormData);
@@ -131,7 +132,8 @@ export const ClassesSection: React.FC<ClassesSectionProps> = ({
       startTime: c.startTime || '18:00',
       endTime: c.endTime || '20:00',
       lessonPlan: c.lessonPlan || [],
-      notes: c.notes || ''
+      notes: c.notes || '',
+      examTypes: c.examTypes || [],
     });
     setIsAdding(true);
   };
@@ -302,6 +304,31 @@ export const ClassesSection: React.FC<ClassesSectionProps> = ({
                 value={formData.notes || ''}
                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
               />
+            </div>
+            <div className="space-y-1 col-span-1 sm:col-span-2 lg:col-span-4">
+              <label className="text-xs font-bold text-gray-500 uppercase block mb-2">Exam Types</label>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(EXAM_TYPE_LABELS) as ExamType[]).map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      examTypes: prev.examTypes.includes(type)
+                        ? prev.examTypes.filter(t => t !== type)
+                        : [...prev.examTypes, type]
+                    }))}
+                    className={cn(
+                      "px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all",
+                      formData.examTypes.includes(type)
+                        ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                        : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+                    )}
+                  >
+                    {EXAM_TYPE_LABELS[type]}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

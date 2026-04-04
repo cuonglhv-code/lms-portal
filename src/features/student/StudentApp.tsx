@@ -10,7 +10,8 @@ import {
   GraduationCap as ExamsIcon,
   TrendingUp,
   Bell,
-  HelpCircle
+  HelpCircle,
+  User,
 } from 'lucide-react';
 import { AppHeader, Sidebar, PageContainer } from '../../components/layout/LayoutComponents';
 import { LoadingSpinner } from '../../components/common/SharedComponents';
@@ -31,6 +32,7 @@ import { HomeworkSection } from './sections/HomeworkSection';
 import { ExamsSection } from './sections/ExamsSection';
 import { ProgressSection } from './sections/ProgressSection';
 import { CommunicationSection } from './sections/CommunicationSection';
+import { StudentProfileSection } from './sections/ProfileSection';
 
 interface StudentAppProps {
   user: { id: string; email?: string };
@@ -92,6 +94,7 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
     if (path.includes('/student/exams')) return 'exams';
     if (path.includes('/student/progress')) return 'progress';
     if (path.includes('/student/messages')) return 'communication';
+    if (path.includes('/student/profile')) return 'profile';
     return 'dashboard';
   };
 
@@ -104,6 +107,7 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
     { id: 'exams', path: '/student/exams', icon: ExamsIcon, label: 'My Exams' },
     { id: 'progress', path: '/student/progress', icon: TrendingUp, label: 'My Progress' },
     { id: 'communication', path: '/student/messages', icon: Bell, label: 'Messages' },
+    { id: 'profile', path: '/student/profile', icon: User, label: 'Profile' },
   ];
 
   const renderContent = () => {
@@ -152,6 +156,8 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
             onSendMessage={handleSendMessage}
           />
         );
+      case 'profile':
+        return <StudentProfileSection studentId={student.id} />;
       default:
         return (
           <DashboardSection

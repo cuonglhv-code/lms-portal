@@ -61,6 +61,7 @@ export const dbService = {
       start_time: data.startTime,
       end_time: data.endTime,
       lesson_plan: data.lessonPlan || [],
+      exam_types: data.examTypes || [],
       notes: data.notes,
       target_outcome: data.targetOutcome,
       starting_level: data.startingLevel,
@@ -84,6 +85,7 @@ export const dbService = {
     if (data.startTime) updateData.start_time = data.startTime;
     if (data.endTime) updateData.end_time = data.endTime;
     if (data.lessonPlan) updateData.lesson_plan = data.lessonPlan;
+    if (data.examTypes) updateData.exam_types = data.examTypes;
     if (data.notes !== undefined) updateData.notes = data.notes;
     if (data.targetOutcome) updateData.target_outcome = data.targetOutcome;
     if (data.startingLevel) updateData.starting_level = data.startingLevel;

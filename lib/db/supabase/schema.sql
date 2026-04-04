@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS classes (
   end_time TEXT DEFAULT '',
   class_days JSONB DEFAULT '[]',
   lesson_plan JSONB DEFAULT '[]',
+  exam_types JSONB DEFAULT '[]',
   notes TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
