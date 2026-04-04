@@ -6,12 +6,14 @@ import {
   BookOpen, 
   Building2, 
   Settings, 
-  Trash2 
+  Trash2,
+  Upload
 } from 'lucide-react';
 import { format, parseISO, addDays, getDay } from 'date-fns';
 
 import { Button } from '../../../components/common/Button';
 import { Card } from '../../../components/common/Card';
+import { ImportDialog } from '../../../components/common/ImportDialog';
 import { cn } from '../../../utils/cn';
 import { Class, LessonSession } from '../../../types/models';
 
@@ -21,17 +23,17 @@ interface ClassesSectionProps {
   onUpdate: (id: string, data: Partial<Class>) => void;
   onDelete: (id: string) => void;
   onViewDetail: (id: string) => void;
+  onImportClasses: (classes: Array<{ name: string; center?: string; teacher?: string; totalSessions?: number; startingLevel?: string; startDate?: string; startTime?: string; endTime?: string; classDays?: string[]; targetOutcome?: number; sessionsPerWeek?: number }>) => Promise<void>;
+  onImportLessons: (lessons: Array<{ classId: string; sessionNumber: number; date: string; content: string; homework?: string; isExam?: boolean }>) => Promise<void>;
 }
 
 export const ClassesSection: React.FC<ClassesSectionProps> = ({ 
-  classes, 
-  onAdd, 
-  onUpdate, 
-  onDelete, 
-  onViewDetail 
+  classes, onAdd, onUpdate, onDelete, onViewDetail, onImportClasses, onImportLessons
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showImportClasses, setShowImportClasses] = useState(false);
+  const [showImportLessons, setShowImportLessons] = useState(false);
   const [filterCenter, setFilterCenter] = useState('');
   const [filterTeacher, setFilterTeacher] = useState('');
   
@@ -174,10 +176,18 @@ export const ClassesSection: React.FC<ClassesSectionProps> = ({
               <option key={teacher} value={teacher}>{teacher}</option>
             ))}
           </select>
-          <Button onClick={() => { setIsAdding(true); setEditingId(null); }}>
-            <Plus className="w-5 h-5 mr-2" />
-            New Class
-          </Button>
+           <Button variant="outline" size="sm" onClick={() => setShowImportClasses(true)}>
+             <Upload className="w-4 h-4 mr-1" />
+             Import Classes
+           </Button>
+           <Button variant="outline" size="sm" onClick={() => setShowImportLessons(true)}>
+             <Upload className="w-4 h-4 mr-1" />
+             Import Lessons
+           </Button>
+           <Button onClick={() => { setIsAdding(true); setEditingId(null); }}>
+             <Plus className="w-5 h-5 mr-2" />
+             New Class
+           </Button>
         </div>
       </div>
 
@@ -407,6 +417,9 @@ export const ClassesSection: React.FC<ClassesSectionProps> = ({
           </Card>
         ))}
       </div>
+
+      <ImportDialog type="classes" isOpen={showImportClasses} onClose={() => setShowImportClasses(false)} onImport={onImportClasses} existingItems={classes.map(c => ({ id: c.id, name: c.name }))} />
+      <ImportDialog type="lessons" isOpen={showImportLessons} onClose={() => setShowImportLessons(false)} onImport={onImportLessons} existingItems={classes.map(c => ({ id: c.id, name: c.name }))} />
     </div>
   );
 };

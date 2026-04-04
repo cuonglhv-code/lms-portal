@@ -5,7 +5,6 @@ import {
   BookOpen, 
   GraduationCap, 
   Download, 
-  Plus, 
   LogOut, 
   HelpCircle,
   FileSpreadsheet,
@@ -50,7 +49,6 @@ import { HomeworkSection } from './features/teacher/sections/HomeworkSection';
 import { ExamsSection } from './features/teacher/sections/ExamsSection';
 import { CommunicationSection } from './features/teacher/sections/CommunicationSection';
 import { ReportsSection } from './features/teacher/sections/ReportsSection';
-import { ImportSection } from './features/teacher/sections/ImportSection';
 import { ExportSection } from './features/teacher/sections/ExportSection';
 import { StudentApp } from './features/student/StudentApp';
 
@@ -140,8 +138,6 @@ function MainApp() {
     { id: 'exams', label: 'Exams', icon: GraduationCap },
     { id: 'communication', label: 'Communication', icon: HelpCircle },
     { id: 'reports', label: 'Reports', icon: FileSpreadsheet },
-    { id: 'import', label: 'Import', icon: Plus },
-    { id: 'export', label: 'Export', icon: Download },
   ];
 
   const handleTabClick = (id: string) => {
@@ -204,6 +200,8 @@ function MainApp() {
                     onConfirm: () => deleteClass(id)
                   })}
                   onView={(cl) => setSelectedClassId(cl.id)}
+                  onImportClasses={importClassesBatch}
+                  onImportLessons={importLessonsBatch}
                 />
               )}
 
@@ -237,6 +235,7 @@ function MainApp() {
                   })}
                   onEnroll={enrollStudent}
                   onUnenroll={unenrollStudent}
+                  onImportStudents={importStudentsBatch}
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
                 />
@@ -310,16 +309,6 @@ function MainApp() {
                   attendance={attendance}
                   homework={homework}
                   exams={exams}
-                />
-              )}
-
-              {activeTab === 'import' && (
-                <ImportSection 
-                  onImportStudents={importStudentsBatch}
-                  onImportLessons={importLessonsBatch}
-                  onImportClasses={importClassesBatch}
-                  existingStudents={students.map(s => ({ id: s.id, email: s.email || '', name: s.name }))}
-                  existingClasses={classes.map(c => ({ id: c.id, name: c.name }))}
                 />
               )}
 
