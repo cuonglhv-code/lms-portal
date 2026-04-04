@@ -100,12 +100,15 @@ export const ClassesSection: React.FC<ClassesSectionProps> = ({
     return plan;
   };
 
+  const [planGenerated, setPlanGenerated] = useState(false);
+
   useEffect(() => {
-    if (!editingId && formData.totalSessions > 0 && formData.classDays.length > 0) {
+    if (!editingId && !planGenerated && formData.totalSessions > 0 && formData.classDays.length > 0) {
       const newPlan = generateLessonPlan(formData.totalSessions, formData.startDate, formData.classDays);
       setFormData(prev => ({ ...prev, lessonPlan: newPlan }));
+      setPlanGenerated(true);
     }
-  }, [formData.totalSessions, formData.startDate, formData.classDays, editingId]);
+  }, [formData.totalSessions, formData.startDate, formData.classDays, editingId, planGenerated]);
 
   const handleSubmit = () => {
     if (editingId) {
@@ -116,6 +119,7 @@ export const ClassesSection: React.FC<ClassesSectionProps> = ({
       setIsAdding(false);
     }
     setFormData(initialFormData);
+    setPlanGenerated(false);
   };
 
   const handleEdit = (c: Class) => {
@@ -382,7 +386,7 @@ export const ClassesSection: React.FC<ClassesSectionProps> = ({
             </div>
           </div>
           <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setIsAdding(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => { setIsAdding(false); setEditingId(null); setFormData(initialFormData); setPlanGenerated(false); }}>Cancel</Button>
             <Button onClick={handleSubmit}>Save</Button>
           </div>
         </Card>

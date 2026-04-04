@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../supabase';
+import { supabase } from '../supabase';
 import { UserRole } from '../types/auth';
 
 const DEFAULT_ACTOR_ROLE: UserRole = UserRole.Teacher;
@@ -60,7 +60,7 @@ class AuditService {
     if (!this.enabled) return null;
 
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('audit_logs')
         .insert({
           actor_id: entry.actorId,
@@ -111,7 +111,7 @@ class AuditService {
 
   async getRecentLogs(count = 50): Promise<AuditLogEntry[]> {
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
@@ -142,7 +142,7 @@ class AuditService {
 
   async getLogsByTarget(targetType: AuditLogEntry['targetType'], targetId: string): Promise<AuditLogEntry[]> {
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
         .eq('resource_type', targetType)
@@ -175,7 +175,7 @@ class AuditService {
 
   async getLogsByActor(actorId: string): Promise<AuditLogEntry[]> {
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
         .eq('actor_id', actorId)

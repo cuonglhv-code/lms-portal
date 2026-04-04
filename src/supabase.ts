@@ -22,18 +22,4 @@ export const supabase: SupabaseClient = createClient(
   options
 )
 
-const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY || ''
-
-export const supabaseAdmin: SupabaseClient = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseServiceKey || 'placeholder-key',
-  {
-    ...options,
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-)
-
 export const isConfigured = !!supabaseUrl && !!supabaseAnonKey

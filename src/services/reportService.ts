@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../supabase';
+import { supabase } from '../supabase';
 
 export interface ReportOptions {
   type: 'students' | 'classes' | 'attendance' | 'homework' | 'exams';
@@ -32,7 +32,7 @@ export const reportService = {
   },
 
   async generateStudentsReport(format: 'csv' | 'json', filters?: any) {
-    let query = supabaseAdmin
+    let query = supabase
       .from('students')
       .select(`
         id,
@@ -67,7 +67,7 @@ export const reportService = {
   },
 
   async generateClassesReport(format: 'csv' | 'json', filters?: any) {
-    let query = supabaseAdmin
+    let query = supabase
       .from('classes')
       .select(`
         id,
@@ -108,7 +108,7 @@ export const reportService = {
   },
 
   async generateAttendanceReport(format: 'csv' | 'json', filters?: any) {
-    let query = supabaseAdmin
+    let query = supabase
       .from('attendance')
       .select(`
         id,
@@ -148,7 +148,7 @@ export const reportService = {
   },
 
   async generateHomeworkReport(format: 'csv' | 'json', filters?: any) {
-    let query = supabaseAdmin
+    let query = supabase
       .from('homework_submissions')
       .select(`
         *,
@@ -184,7 +184,7 @@ export const reportService = {
   },
 
   async generateExamsReport(format: 'csv' | 'json', filters?: any) {
-    let query = supabaseAdmin
+    let query = supabase
       .from('exam_scores')
       .select(`
         *,

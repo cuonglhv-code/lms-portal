@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertCircle, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { Button } from './Button';
@@ -8,7 +8,7 @@ type ConfirmType = 'danger' | 'warning' | 'success' | 'info';
 interface ConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
   title: string;
   message: string;
   confirmText?: string;
@@ -53,6 +53,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   type = 'danger',
 }) => {
   const { icon, buttonClass } = config[type];
+  const [confirming, setConfirming] = useState(false);
+
+  const handleConfirm = async () => {
+    setConfirming(true);
+    try {
+      await onConfirm();
+    } finally {
+      setConfirming(false);
+      onClose();
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -83,12 +94,14 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                 variant="outline" 
                 className="flex-1" 
                 onClick={onClose}
+                disabled={confirming}
               >
                 {cancelText}
               </Button>
               <Button 
                 className={`flex-1 text-white ${buttonClass}`} 
-                onClick={() => { onConfirm(); onClose(); }}
+                onClick={handleConfirm}
+                loading={confirming}
               >
                 {confirmText}
               </Button>

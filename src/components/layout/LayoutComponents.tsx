@@ -1,6 +1,6 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import { Shield, GraduationCap, Users, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Shield, GraduationCap, Users, LogOut, Menu, X } from 'lucide-react';
 import { Button } from '../common/Button';
 
 interface AppHeaderProps {
@@ -9,6 +9,8 @@ interface AppHeaderProps {
   userEmail?: string;
   userAvatar?: string;
   onLogout: () => void;
+  onToggleSidebar?: () => void;
+  sidebarOpen?: boolean;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -17,6 +19,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   userEmail,
   userAvatar,
   onLogout,
+  onToggleSidebar,
+  sidebarOpen,
 }) => {
   const icons = {
     admin: Shield,
@@ -36,6 +40,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center gap-3">
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+              aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          )}
           <div className="bg-indigo-600 p-2 rounded-xl">
             <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
@@ -49,7 +62,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             {userAvatar ? (
               <img
                 src={userAvatar}
-                alt=""
+                alt="User avatar"
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-gray-200"
               />
             ) : (
@@ -66,7 +79,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               )}
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={onLogout} className="p-2">
+          <Button variant="ghost" size="sm" onClick={onLogout} className="p-2" aria-label="Sign out">
             <LogOut className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 hover:text-red-600" />
           </Button>
         </div>
@@ -86,45 +99,67 @@ interface SidebarProps {
   items: NavItem[];
   activeId: string;
   onItemClick: (id: string) => void;
+  mobileOpen?: boolean;
+  onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ items, activeId, onItemClick }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ items, activeId, onItemClick, mobileOpen, onClose }) => {
   return (
-    <aside className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-gray-200">
-      <nav className="flex md:flex-col gap-1 p-2 md:p-4 overflow-x-auto md:overflow-visible">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeId === item.id;
+    <>
+      {mobileOpen !== undefined && (
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 z-30 bg-black/40 md:hidden"
+            />
+          )}
+        </AnimatePresence>
+      )}
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 md:transform-none
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `} role="navigation" aria-label="Main navigation">
+        <nav className="flex md:flex-col gap-1 p-4 overflow-y-auto h-full">
+          {items.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeId === item.id;
 
-          return (
-            <motion.button
-              key={item.id}
-              onClick={() => onItemClick(item.id)}
-              whileHover={{ x: 2 }}
-              whileTap={{ scale: 0.98 }}
-              className={`
-                flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap
-                ${isActive
-                  ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }
-              `}
-            >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
-              <span className="flex-1 text-left">{item.label}</span>
-              {item.badge !== undefined && item.badge > 0 && (
-                <span className={`
-                  px-2 py-0.5 rounded-full text-xs font-semibold
-                  ${isActive ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'}
-                `}>
-                  {item.badge > 99 ? '99+' : item.badge}
-                </span>
-              )}
-            </motion.button>
-          );
-        })}
-      </nav>
-    </aside>
+            return (
+              <motion.button
+                key={item.id}
+                onClick={() => { onItemClick(item.id); onClose?.(); }}
+                whileTap={{ scale: 0.98 }}
+                role="tab"
+                aria-selected={isActive}
+                aria-current={isActive ? 'page' : undefined}
+                className={`
+                  flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap w-full
+                  ${isActive
+                    ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }
+                `}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className={`
+                    px-2 py-0.5 rounded-full text-xs font-semibold
+                    ${isActive ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'}
+                  `}>
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </motion.button>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
   );
 };
 

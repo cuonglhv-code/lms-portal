@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin } from '../supabase';
+import { supabase } from '../supabase';
 import { UserRecord, UserRole } from '../types/auth';
 
 export type UserStatus = 'active' | 'suspended' | 'invited' | 'archived';
@@ -21,7 +21,7 @@ class UserService {
     const { email, password, displayName, role } = params;
 
     try {
-      const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
@@ -38,7 +38,7 @@ class UserService {
       const authUid = authUser.user.id;
 
       try {
-        const { data: dbUser, error: dbError } = await supabaseAdmin
+        const { data: dbUser, error: dbError } = await supabase
           .from('users')
           .insert({
             auth_id: authUid,
@@ -91,7 +91,7 @@ class UserService {
 
   async getUser(userId: string): Promise<UserRecord | null> {
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
@@ -117,7 +117,7 @@ class UserService {
 
   async getUserByEmail(email: string): Promise<UserRecord | null> {
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('email', email.toLowerCase())
@@ -156,7 +156,7 @@ class UserService {
         updateData.status = params.status;
       }
 
-      const { error } = await supabaseAdmin
+      const { error } = await supabase
         .from('users')
         .update(updateData)
         .eq('id', userId);
@@ -172,13 +172,13 @@ class UserService {
 
   async deleteUser(userId: string): Promise<void> {
     try {
-      const { data: user } = await supabaseAdmin
+      const { data: user } = await supabase
         .from('users')
         .select('auth_id')
         .eq('id', userId)
         .single();
 
-      const { error: dbError } = await supabaseAdmin
+      const { error: dbError } = await supabase
         .from('users')
         .delete()
         .eq('id', userId);
@@ -188,7 +188,7 @@ class UserService {
       }
 
       if (user?.auth_id) {
-        const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(user.auth_id);
+        const { error: authError } = await supabase.auth.admin.deleteUser(user.auth_id);
         if (authError) {
           console.warn('[UserService] Could not delete auth user:', authError.message);
         }
@@ -224,7 +224,7 @@ class UserService {
     const { role, status, search, page = 1, pageSize = 20 } = options;
 
     try {
-      let query = supabaseAdmin
+      let query = supabase
         .from('users')
         .select('*', { count: 'exact' });
 

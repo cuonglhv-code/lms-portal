@@ -88,6 +88,7 @@ function MainApp() {
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [searchTerm, setSearchTerm] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ 
     isOpen: false, 
     title: '', 
@@ -154,10 +155,12 @@ function MainApp() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <AppHeader
         type="teacher"
-        userName={user.displayName}
+        userName={user.user_metadata?.display_name || user.email?.split('@')[0] || 'User'}
         userEmail={user.email}
-        userAvatar={user.photoURL}
+        userAvatar={user.user_metadata?.avatar_url}
         onLogout={handleLogout}
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        sidebarOpen={sidebarOpen}
       />
 
       <div className="flex-1 flex flex-col md:flex-row">
@@ -165,6 +168,8 @@ function MainApp() {
           items={teacherNavItems.map(item => ({ ...item, id: item.id as Tab }))}
           activeId={activeTab}
           onItemClick={handleTabClick}
+          mobileOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
 
         <PageContainer>

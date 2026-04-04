@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../supabase';
+import { supabase } from '../supabase';
 
 export interface Session {
   id: string;
@@ -40,7 +40,7 @@ export interface UpdateSessionParams {
 
 export const sessionService = {
   async listSessionsByClass(classId: string): Promise<Session[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('sessions')
       .select(`
         *,
@@ -54,7 +54,7 @@ export const sessionService = {
   },
 
   async getSession(id: string): Promise<Session | null> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('sessions')
       .select(`
         *,
@@ -68,7 +68,7 @@ export const sessionService = {
   },
 
   async createSession(params: CreateSessionParams): Promise<Session> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('sessions')
       .insert({
         class_id: params.class_id,
@@ -87,7 +87,7 @@ export const sessionService = {
   },
 
   async updateSession(id: string, params: UpdateSessionParams): Promise<void> {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('sessions')
       .update(params)
       .eq('id', id);
@@ -96,7 +96,7 @@ export const sessionService = {
   },
 
   async deleteSession(id: string): Promise<void> {
-    const { error } = await supabaseAdmin.from('sessions').delete().eq('id', id);
+    const { error } = await supabase.from('sessions').delete().eq('id', id);
     if (error) throw error;
   },
 
@@ -109,7 +109,7 @@ export const sessionService = {
     const session = await this.getSession(sessionId);
     if (!session) throw new Error('Session not found');
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('homework')
       .insert({
         class_id: session.class_id,

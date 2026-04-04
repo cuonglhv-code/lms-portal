@@ -58,8 +58,6 @@ export const StudentProfileSection: React.FC<{ studentId: string | null }> = ({ 
         phone: profile.phone,
         parent_name: profile.parent_name,
         parent_email: profile.parent_email,
-        entry_level: profile.entry_level,
-        target_outcome: profile.target_outcome,
         avatar_url: profile.avatar_url,
       }).eq('id', studentId);
       if (error) throw error;
@@ -115,11 +113,11 @@ export const StudentProfileSection: React.FC<{ studentId: string | null }> = ({ 
             <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
               <GraduationCap className="w-3 h-3" /> Entry Level
             </label>
-            <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value={profile.entry_level} onChange={e => setProfile({ ...profile, entry_level: e.target.value })} />
+            <div className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 text-sm">{profile.entry_level || 'N/A'}</div>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-bold text-gray-500 uppercase">Target Outcome</label>
-            <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value={profile.target_outcome} onChange={e => setProfile({ ...profile, target_outcome: e.target.value })} />
+            <div className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 text-sm">{profile.target_outcome || 'N/A'}</div>
           </div>
           <div className="space-y-1 sm:col-span-2">
             <label className="text-xs font-bold text-gray-500 uppercase">Avatar URL</label>

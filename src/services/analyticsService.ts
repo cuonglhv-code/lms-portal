@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../supabase';
+import { supabase } from '../supabase';
 
 export interface StudentProgress {
   studentId: string;
@@ -50,14 +50,14 @@ export const analyticsService = {
       attendanceData,
       homeworkData,
     ] = await Promise.all([
-      supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
-      supabaseAdmin.from('classes').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabaseAdmin.from('centers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).gte('created_at', firstOfMonth),
-      supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).gte('created_at', lastMonth).lt('created_at', firstOfMonth),
-      supabaseAdmin.from('attendance').select('status').eq('status', 'present'),
-      supabaseAdmin.from('homework_submissions').select('status').eq('status', 'submitted'),
+      supabase.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
+      supabase.from('classes').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('centers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('students').select('*', { count: 'exact', head: true }).gte('created_at', firstOfMonth),
+      supabase.from('students').select('*', { count: 'exact', head: true }).gte('created_at', lastMonth).lt('created_at', firstOfMonth),
+      supabase.from('attendance').select('status').eq('status', 'present'),
+      supabase.from('homework_submissions').select('status').eq('status', 'submitted'),
     ]);
 
     const totalStudents = studentsResult.count || 0;
@@ -87,7 +87,7 @@ export const analyticsService = {
   },
 
   async getStudentProgress(studentId: string): Promise<StudentProgress[]> {
-    const { data: enrollments } = await supabaseAdmin
+    const { data: enrollments } = await supabase
       .from('student_classes')
       .select('class_id, classes(name)')
       .eq('student_id', studentId)
@@ -101,9 +101,9 @@ export const analyticsService = {
       const classId = enrollment.class_id;
 
       const [attendance, homework, exams] = await Promise.all([
-        supabaseAdmin.from('attendance').select('status').eq('student_id', studentId).eq('class_id', classId),
-        supabaseAdmin.from('homework_submissions').select('status').eq('student_id', studentId).eq('homework(class_id).class_id', classId),
-        supabaseAdmin.from('exam_scores').select('score, percentage').eq('student_id', studentId).eq('exam_id', enrollment.class_id),
+        supabase.from('attendance').select('status').eq('student_id', studentId).eq('class_id', classId),
+        supabase.from('homework_submissions').select('status').eq('student_id', studentId).eq('homework(class_id).class_id', classId),
+        supabase.from('exam_scores').select('score, percentage').eq('student_id', studentId).eq('exam_id', enrollment.class_id),
       ]);
 
       const totalAtt = attendance.data?.length || 0;
@@ -144,7 +144,7 @@ export const analyticsService = {
   },
 
   async getClassAnalytics(classId: string): Promise<ClassAnalytics | null> {
-    const { data: classData } = await supabaseAdmin
+    const { data: classData } = await supabase
       .from('classes')
       .select('id, name')
       .eq('id', classId)
@@ -152,7 +152,7 @@ export const analyticsService = {
 
     if (!classData) return null;
 
-    const { data: students } = await supabaseAdmin
+    const { data: students } = await supabase
       .from('student_classes')
       .select('student_id')
       .eq('class_id', classId)
@@ -161,9 +161,9 @@ export const analyticsService = {
     const studentIds = students?.map(s => s.student_id) || [];
 
     const [attendance, homeworkSubmissions, examScores] = await Promise.all([
-      supabaseAdmin.from('attendance').select('status').in('student_id', studentIds).eq('class_id', classId),
-      supabaseAdmin.from('homework_submissions').select('*').in('student_id', studentIds),
-      supabaseAdmin.from('exam_scores').select('percentage').in('student_id', studentIds),
+      supabase.from('attendance').select('status').in('student_id', studentIds).eq('class_id', classId),
+      supabase.from('homework_submissions').select('*').in('student_id', studentIds),
+      supabase.from('exam_scores').select('percentage').in('student_id', studentIds),
     ]);
 
     const totalAtt = attendance.data?.length || 0;
@@ -197,13 +197,13 @@ export const analyticsService = {
   },
 
   async getRecentActivity(limit = 20) {
-    const { data: recentStudents } = await supabaseAdmin
+    const { data: recentStudents } = await supabase
       .from('students')
       .select('id, display_name, created_at')
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    const { data: recentEnrollments } = await supabaseAdmin
+    const { data: recentEnrollments } = await supabase
       .from('student_classes')
       .select('id, created_at, student_id, class_id, classes(name), students(display_name)')
       .order('created_at', { ascending: false })

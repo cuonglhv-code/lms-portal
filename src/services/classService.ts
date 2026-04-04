@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../supabase';
+import { supabase } from '../supabase';
 
 export interface ClassData {
   id: string;
@@ -59,7 +59,7 @@ export const classService = {
   } = {}) {
     const { centerId, teacherId, status, search, page = 1, pageSize = 20 } = options;
 
-    let query = supabaseAdmin
+    let query = supabase
       .from('classes')
       .select(`
         *,
@@ -82,7 +82,7 @@ export const classService = {
 
     const classesWithCount = await Promise.all(
       (data || []).map(async (c) => {
-        const { count: studentCount } = await supabaseAdmin
+        const { count: studentCount } = await supabase
           .from('student_classes')
           .select('*', { count: 'exact', head: true })
           .eq('class_id', c.id)
@@ -100,7 +100,7 @@ export const classService = {
   },
 
   async getClass(id: string): Promise<ClassData | null> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('classes')
       .select(`
         *,
@@ -115,7 +115,7 @@ export const classService = {
   },
 
   async createClass(params: CreateClassParams): Promise<ClassData> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('classes')
       .insert({
         name: params.name,
@@ -136,7 +136,7 @@ export const classService = {
   },
 
   async updateClass(id: string, params: UpdateClassParams): Promise<void> {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('classes')
       .update(params)
       .eq('id', id);
@@ -145,12 +145,12 @@ export const classService = {
   },
 
   async deleteClass(id: string): Promise<void> {
-    const { error } = await supabaseAdmin.from('classes').delete().eq('id', id);
+    const { error } = await supabase.from('classes').delete().eq('id', id);
     if (error) throw error;
   },
 
   async getClassStudents(classId: string): Promise<any[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('student_classes')
       .select(`
         *,
@@ -164,7 +164,7 @@ export const classService = {
   },
 
   async enrollStudent(classId: string, studentId: string): Promise<void> {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('student_classes')
       .insert({
         class_id: classId,
@@ -176,7 +176,7 @@ export const classService = {
   },
 
   async unenrollStudent(enrollmentId: string): Promise<void> {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('student_classes')
       .update({ status: 'dropped', dropped_at: new Date().toISOString() })
       .eq('id', enrollmentId);

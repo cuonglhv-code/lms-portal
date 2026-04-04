@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../supabase';
+import { supabase } from '../supabase';
 
 export interface Center {
   id: string;
@@ -28,7 +28,7 @@ export interface UpdateCenterParams {
 
 export const centerService = {
   async listCenters(): Promise<Center[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('centers')
       .select('*')
       .order('name');
@@ -38,7 +38,7 @@ export const centerService = {
   },
 
   async getCenter(id: string): Promise<Center | null> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('centers')
       .select('*')
       .eq('id', id)
@@ -49,7 +49,7 @@ export const centerService = {
   },
 
   async createCenter(params: CreateCenterParams): Promise<Center> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('centers')
       .insert({
         name: params.name,
@@ -66,7 +66,7 @@ export const centerService = {
   },
 
   async updateCenter(id: string, params: UpdateCenterParams): Promise<void> {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('centers')
       .update(params)
       .eq('id', id);
@@ -75,22 +75,22 @@ export const centerService = {
   },
 
   async deleteCenter(id: string): Promise<void> {
-    const { error } = await supabaseAdmin.from('centers').delete().eq('id', id);
+    const { error } = await supabase.from('centers').delete().eq('id', id);
     if (error) throw error;
   },
 
   async getCenterStats(id: string) {
-    const { count: classCount } = await supabaseAdmin
+    const { count: classCount } = await supabase
       .from('classes')
       .select('*', { count: 'exact', head: true })
       .eq('center_id', id);
 
-    const { count: teacherCount } = await supabaseAdmin
+    const { count: teacherCount } = await supabase
       .from('classes')
       .select('teacher_id', { count: 'exact', head: true })
       .eq('center_id', id);
 
-    const { count: studentCount } = await supabaseAdmin
+    const { count: studentCount } = await supabase
       .from('student_classes')
       .select(`
         class:classes!student_classes_class_id_fkey (center_id)

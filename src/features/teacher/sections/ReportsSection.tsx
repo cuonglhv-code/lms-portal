@@ -118,7 +118,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({
         const sAtt = filteredAttendance.filter(a => a.studentId === sid);
         const sExams = filteredExams.filter(e => e.studentId === sid);
         const sAvg = sExams.length > 0 
-          ? sExams.reduce((acc, curr) => acc + (curr.writing + curr.reading + curr.speaking + curr.listening) / 4, 0) / sExams.length
+          ? sExams.reduce((acc, curr) => acc + ((curr.writing ?? 0) + (curr.reading ?? 0) + (curr.speaking ?? 0) + (curr.listening ?? 0)) / 4, 0) / sExams.length
           : 0;
         
         return {

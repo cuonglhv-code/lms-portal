@@ -9,8 +9,8 @@ import { UserRole } from '../types/auth';
  */
 export function useTeacherActions() {
   const { user, role } = useAuth();
-  const userId = user?.uid || 'anonymous';
-  const userRole = role as UserRole;
+  const userId = user?.id || '';
+  const userRole = role || UserRole.Teacher;
 
   const addStudent = useCallback((data: Omit<Student, 'id' | 'createdAt'>) => 
     dbService.addStudent(data, userId, userRole), [userId, userRole]);

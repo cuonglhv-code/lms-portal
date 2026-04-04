@@ -86,7 +86,7 @@ export const CommunicationSection: React.FC<CommunicationSectionProps> = ({
               <Card key={a.id} className="p-4 relative group">
                 <button 
                   onClick={() => onDeleteAnnouncement(a.id)}
-                  className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-100 transition-opacity"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -169,7 +169,7 @@ export const CommunicationSection: React.FC<CommunicationSectionProps> = ({
                     <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded font-medium text-gray-500">
                       To: {students.find(s => s.id === m.studentId)?.name || 'Unknown'}
                     </span>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-2 opacity-100 transition-opacity">
                       {!isReply && (
                         <button 
                           onClick={() => setReplyingTo(m)}

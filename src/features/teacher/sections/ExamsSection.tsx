@@ -65,7 +65,7 @@ export const ExamsSection: React.FC<ExamsSectionProps> = ({
             <select 
               className="px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white min-w-[200px]"
               value={dateStr}
-              onChange={(e) => setSelectedDate(parseISO(e.target.value))}
+              onChange={(e) => { if (e.target.value) setSelectedDate(parseISO(e.target.value)); }}
               disabled={!selectedClass || examSessions.length === 0}
             >
               <option value="">{examSessions.length > 0 ? 'Select Exam Session...' : 'No Exams Found'}</option>

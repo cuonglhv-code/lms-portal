@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Save, CheckCircle } from 'lucide-react';
+import { User, Mail, Phone, Save, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { Button } from '../../../components/common/Button';
@@ -14,6 +14,7 @@ export const ProfileSection: React.FC = () => {
   const [avatarUrl, setAvatarUrl] = useState(user?.user_metadata?.avatar_url || '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.user_metadata) {
@@ -26,6 +27,7 @@ export const ProfileSection: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
+    setSaveError(null);
     try {
       const { error } = await supabase.auth.updateUser({
         data: {
@@ -38,7 +40,7 @@ export const ProfileSection: React.FC = () => {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      console.error('Failed to update profile:', err);
+      setSaveError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -119,6 +121,11 @@ export const ProfileSection: React.FC = () => {
           {saved && (
             <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-1 text-sm text-green-600">
               <CheckCircle className="w-4 h-4" /> Profile updated!
+            </motion.span>
+          )}
+          {saveError && (
+            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1 text-sm text-red-600">
+              <AlertCircle className="w-4 h-4" /> {saveError}
             </motion.span>
           )}
         </div>
