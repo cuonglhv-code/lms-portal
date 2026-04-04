@@ -97,7 +97,11 @@ function MainApp() {
   });
 
   const handleLogout = async () => {
-    await signOut();
+    try {
+      await signOut();
+    } catch {
+      // signOut already clears local state on error
+    }
     navigate('/');
   };
 

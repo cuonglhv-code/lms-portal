@@ -231,14 +231,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('[Auth] Sign out error:', error);
-      throw error;
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn('[Auth] Sign out error (clearing local state anyway):', error);
+    } finally {
+      setUser(null);
+      setSession(null);
+      setRole(null);
     }
-    setUser(null);
-    setSession(null);
-    setRole(null);
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, metadata?: Record<string, unknown>) => {
