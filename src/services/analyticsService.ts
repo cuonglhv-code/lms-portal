@@ -47,8 +47,10 @@ export const analyticsService = {
       centersResult,
       thisMonthResult,
       lastMonthResult,
-      attendanceData,
-      homeworkData,
+      totalAttendanceResult,
+      presentAttendanceResult,
+      totalHomeworkResult,
+      completedHomeworkResult,
     ] = await Promise.all([
       supabase.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
@@ -56,8 +58,10 @@ export const analyticsService = {
       supabase.from('centers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('students').select('*', { count: 'exact', head: true }).gte('created_at', firstOfMonth),
       supabase.from('students').select('*', { count: 'exact', head: true }).gte('created_at', lastMonth).lt('created_at', firstOfMonth),
-      supabase.from('attendance').select('status').eq('status', 'present'),
-      supabase.from('homework_submissions').select('status').eq('status', 'submitted'),
+      supabase.from('attendance').select('id', { count: 'exact', head: true }),
+      supabase.from('attendance').select('id', { count: 'exact', head: true }).eq('status', 'present'),
+      supabase.from('homework').select('id', { count: 'exact', head: true }),
+      supabase.from('homework_submissions').select('id', { count: 'exact', head: true }).in('status', ['submitted', 'graded']),
     ]);
 
     const totalStudents = studentsResult.count || 0;
@@ -67,8 +71,13 @@ export const analyticsService = {
     const newThisMonth = thisMonthResult.count || 0;
     const newLastMonth = lastMonthResult.count || 0;
 
-    const attendanceRate = attendanceData.data?.length || 0;
-    const homeworkRate = homeworkData.data?.length || 0;
+    const totalAttendance = totalAttendanceResult.count || 0;
+    const presentAttendance = presentAttendanceResult.count || 0;
+    const attendanceRate = totalAttendance > 0 ? Math.round((presentAttendance / totalAttendance) * 100) : 0;
+
+    const totalHomework = totalHomeworkResult.count || 0;
+    const completedHomework = completedHomeworkResult.count || 0;
+    const homeworkCompletionRate = totalHomework > 0 ? Math.round((completedHomework / totalHomework) * 100) : 0;
 
     const newStudentsTrend = newLastMonth 
       ? Math.round(((newThisMonth - newLastMonth) / newLastMonth) * 100)
@@ -82,7 +91,7 @@ export const analyticsService = {
       newStudentsThisMonth: newThisMonth,
       newStudentsTrend,
       attendanceRate,
-      homeworkCompletionRate: homeworkRate,
+      homeworkCompletionRate,
     };
   },
 
@@ -160,9 +169,10 @@ export const analyticsService = {
 
     const studentIds = students?.map(s => s.student_id) || [];
 
-    const [attendance, homeworkSubmissions, examScores] = await Promise.all([
+    const [attendance, homeworkSubmissions, homework, examScores] = await Promise.all([
       supabase.from('attendance').select('status').in('student_id', studentIds).eq('class_id', classId),
       supabase.from('homework_submissions').select('*').in('student_id', studentIds),
+      supabase.from('homework').select('id').eq('class_id', classId),
       supabase.from('exam_scores').select('percentage').in('student_id', studentIds),
     ]);
 
@@ -170,7 +180,7 @@ export const analyticsService = {
     const presentAtt = attendance.data?.filter(a => a.status === 'present' || a.status === 'late').length || 0;
     const averageAttendance = totalAtt > 0 ? Math.round((presentAtt / totalAtt) * 100) : 0;
 
-    const totalHw = homeworkSubmissions.data?.length || 0;
+    const totalHw = homework.data?.length || 0;
     const completedHw = homeworkSubmissions.data?.filter(h => h.status === 'submitted' || h.status === 'graded').length || 0;
     const averageHomeworkCompletion = totalHw > 0 ? Math.round((completedHw / totalHw) * 100) : 0;
 
