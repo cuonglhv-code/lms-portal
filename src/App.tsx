@@ -97,11 +97,14 @@ function MainApp() {
   });
 
   const handleLogout = async () => {
+    console.log('[Auth] Logging out...');
     try {
       await signOut();
-    } catch {
-      // signOut already clears local state on error
+      console.log('[Auth] signOut completed');
+    } catch (error) {
+      console.error('[Auth] signOut error:', error);
     }
+    console.log('[Auth] Navigating to home...');
     navigate('/');
   };
 

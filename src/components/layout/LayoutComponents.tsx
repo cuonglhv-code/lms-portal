@@ -79,9 +79,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               )}
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={onLogout} className="p-2" aria-label="Sign out">
-            <LogOut className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 hover:text-red-600" />
-          </Button>
+          <button 
+            onClick={onLogout}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Sign out"
+            type="button"
+          >
+            <LogOut className="w-5 h-5 text-gray-500 hover:text-red-600" />
+          </button>
         </div>
       </div>
     </header>
