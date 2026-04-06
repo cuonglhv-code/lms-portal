@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   Users, 
   Calendar, 
@@ -96,7 +96,7 @@ function MainApp() {
     onConfirm: () => {} 
   });
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     console.log('[Auth] Logging out...');
     try {
       await signOut();
@@ -104,9 +104,9 @@ function MainApp() {
     } catch (error) {
       console.error('[Auth] signOut error:', error);
     }
-    console.log('[Auth] Navigating to home...');
-    navigate('/');
-  };
+    console.log('[Auth] Redirecting to home...');
+    window.location.href = '/';
+  }, [signOut]);
 
   const handleEmailLogin = async (email: string, pass: string) => {
     await signIn(email, pass);

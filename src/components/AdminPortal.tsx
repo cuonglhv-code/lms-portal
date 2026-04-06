@@ -54,10 +54,17 @@ export const AdminPortal: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
-  };
+  const handleLogout = useCallback(async () => {
+    console.log('[Admin] Logging out...');
+    try {
+      await signOut();
+      console.log('[Admin] SignOut completed, navigating to /');
+      window.location.href = '/';
+    } catch (error) {
+      console.error('[Admin] Logout error:', error);
+      window.location.href = '/';
+    }
+  }, [signOut]);
 
   const navItems = [
     { id: 'dashboard' as AdminTab, icon: LayoutDashboard, label: 'Dashboard' },
@@ -73,9 +80,9 @@ export const AdminPortal: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <AppHeader
         type="admin"
-        userName={user?.displayName}
+        userName={user?.user_metadata?.display_name || user?.email?.split('@')[0]}
         userEmail={user?.email}
-        userAvatar={user?.photoURL}
+        userAvatar={user?.user_metadata?.avatar_url}
         onLogout={handleLogout}
       />
       <div className="flex-1 flex flex-col md:flex-row">
