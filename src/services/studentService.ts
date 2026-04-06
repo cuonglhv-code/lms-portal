@@ -1,6 +1,58 @@
 import { supabase } from '../supabase';
+import { UserRecord, UserRole } from '../types/auth';
 
 export const studentService = {
+  async listStudents(options: {
+    search?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  } = {}): Promise<{ students: UserRecord[]; total: number; hasMore: boolean }> {
+    const { search, status, page = 1, pageSize = 20 } = options;
+
+    try {
+      let query = supabase
+        .from('students')
+        .select('*', { count: 'exact' });
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+      if (search) {
+        query = query.or(`email.ilike.%${search}%,display_name.ilike.%${search}%`);
+      }
+
+      const { data, error, count } = await query
+        .range((page - 1) * pageSize, page * pageSize)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      const students: UserRecord[] = (data || []).map((s) => ({
+        id: s.id,
+        authUid: s.auth_id,
+        email: s.email,
+        displayName: s.display_name,
+        role: UserRole.Student,
+        status: s.status as 'active' | 'suspended' | 'invited' | 'archived',
+        createdAt: new Date(s.created_at).getTime(),
+        updatedAt: s.updated_at ? new Date(s.updated_at).getTime() : undefined,
+        isActive: s.status === 'active',
+      }));
+
+      return {
+        students,
+        total: count || 0,
+        hasMore: (count || 0) > page * pageSize,
+      };
+    } catch (error) {
+      console.error('[StudentService] List students error:', error);
+      return { students: [], total: 0, hasMore: false };
+    }
+  },
+
   async sendMessage(
     recipientId: string,
     content: string,

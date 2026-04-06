@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthProvider';
 import { UserRecord, UserRole } from '../types/auth';
 import { userService } from '../services/userService';
+import { studentService } from '../services/studentService';
 import { classService, ClassData } from '../services/classService';
 import { centerService, Center } from '../services/centerService';
 import { analyticsService, DashboardStats } from '../services/analyticsService';
@@ -211,15 +212,45 @@ const UsersSection: React.FC = () => {
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await userService.listUsers({
-        role: roleFilter || undefined,
-        status: statusFilter || undefined,
-        search: searchTerm || undefined,
-        page: currentPage,
-        pageSize: PAGE_SIZE,
-      });
-      setUsers(result.users);
-      setTotal(result.total);
+      if (roleFilter === UserRole.Student) {
+        const result = await studentService.listStudents({
+          status: statusFilter || undefined,
+          search: searchTerm || undefined,
+          page: currentPage,
+          pageSize: PAGE_SIZE,
+        });
+        setUsers(result.students);
+        setTotal(result.total);
+      } else if (roleFilter === UserRole.Admin || roleFilter === UserRole.Teacher) {
+        const result = await userService.listUsers({
+          role: roleFilter,
+          status: statusFilter || undefined,
+          search: searchTerm || undefined,
+          page: currentPage,
+          pageSize: PAGE_SIZE,
+        });
+        setUsers(result.users);
+        setTotal(result.total);
+      } else {
+        const [usersResult, studentsResult] = await Promise.all([
+          userService.listUsers({
+            status: statusFilter || undefined,
+            search: searchTerm || undefined,
+            page: currentPage,
+            pageSize: Math.floor(PAGE_SIZE / 2),
+          }),
+          studentService.listStudents({
+            status: statusFilter || undefined,
+            search: searchTerm || undefined,
+            page: currentPage,
+            pageSize: Math.ceil(PAGE_SIZE / 2),
+          }),
+        ]);
+        const combined = [...usersResult.users, ...studentsResult.students];
+        combined.sort((a, b) => b.createdAt - a.createdAt);
+        setUsers(combined);
+        setTotal(usersResult.total + studentsResult.total);
+      }
     } catch (error) {
       console.error('Failed to load users:', error);
     } finally {
