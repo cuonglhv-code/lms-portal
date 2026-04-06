@@ -41,7 +41,7 @@ export function DemoTeacherApp({ user }: DemoTeacherAppProps) {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/');
+    window.location.href = '/';
   };
 
   const stats = {

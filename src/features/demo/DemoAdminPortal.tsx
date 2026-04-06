@@ -47,7 +47,7 @@ export function DemoAdminPortal({ user }: DemoAdminPortalProps) {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/');
+    window.location.href = '/';
   };
 
   const navItems = [

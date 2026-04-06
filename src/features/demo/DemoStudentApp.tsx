@@ -35,7 +35,7 @@ export function DemoStudentApp({ user }: DemoStudentAppProps) {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/');
+    window.location.href = '/';
   };
 
   // Find the student record
