@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../supabase';
 
-interface AttendanceData {
+export interface StudentAttendance {
   id: string;
-  student_id: string;
-  class_id: string;
+  studentId: string;
+  classId: string;
+  className: string;
   date: string;
   status: 'present' | 'absent' | 'late' | 'excused';
   notes?: string;
-  class?: { name: string };
 }
 
 export function useStudentAttendance(studentId: string | null) {
-  const [attendance, setAttendance] = useState<AttendanceData[]>([]);
+  const [attendance, setAttendance] = useState<StudentAttendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -35,7 +35,16 @@ export function useStudentAttendance(studentId: string | null) {
           .order('date', { ascending: false });
 
         if (fetchError) throw fetchError;
-        setAttendance(data || []);
+        
+        setAttendance((data || []).map((a: any) => ({
+          id: a.id,
+          studentId: a.student_id,
+          classId: a.class_id,
+          className: a.class?.name || '',
+          date: a.date,
+          status: a.status,
+          notes: a.notes,
+        })));
       } catch (err) {
         console.error('Error fetching attendance:', err);
         setError(err as Error);
@@ -58,6 +67,7 @@ export function useAttendanceStats(studentId: string | null) {
     present: 0,
     absent: 0,
     late: 0,
+    excused: 0,
     rate: 0,
   };
 
@@ -65,6 +75,7 @@ export function useAttendanceStats(studentId: string | null) {
     stats.present = attendance.filter((a) => a.status === 'present').length;
     stats.absent = attendance.filter((a) => a.status === 'absent').length;
     stats.late = attendance.filter((a) => a.status === 'late').length;
+    stats.excused = attendance.filter((a) => a.status === 'excused').length;
     stats.rate = Math.round(((stats.present + stats.late) / attendance.length) * 100);
   }
 

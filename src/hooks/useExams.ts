@@ -7,15 +7,15 @@ export function useExams() {
     orderBy: { column: 'graded_at', ascending: false }
   });
 
-  // Transform DB data to match frontend ExamScore model
   const transformedData = data?.map(exam => ({
     id: exam.id,
     studentId: exam.student_id,
+    examId: exam.exam_id,
     date: exam.graded_at || exam.created_at,
-    writing: exam.score || 0,
-    reading: exam.score || 0,
-    speaking: exam.score || 0,
-    listening: exam.score || 0,
+    writing: exam.writing ?? exam.score ?? 0,
+    reading: exam.reading ?? exam.score ?? 0,
+    speaking: exam.speaking ?? exam.score ?? 0,
+    listening: exam.listening ?? exam.score ?? 0,
     comment: exam.comments || '',
   })) || [];
 

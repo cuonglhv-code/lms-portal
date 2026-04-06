@@ -4,11 +4,12 @@ import { motion } from 'motion/react';
 import { BookOpen, Calendar, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 
 import { Card } from '../../../components/common/Card';
-import { Homework, Class } from '../../../types/models';
+import { StudentHomework } from '../../../hooks/student/useStudentHomework';
+import { StudentClass } from '../../../hooks/student/useStudentClasses';
 
 interface HomeworkSectionProps {
-  homework: Homework[];
-  classes: Class[];
+  homework: StudentHomework[];
+  classes: StudentClass[];
 }
 
 export const HomeworkSection: React.FC<HomeworkSectionProps> = ({ homework, classes }) => {
@@ -18,60 +19,56 @@ export const HomeworkSection: React.FC<HomeworkSectionProps> = ({ homework, clas
     return classes.find(c => c.id === classId)?.name || 'Unknown Class';
   };
 
-  const getSessionInfo = (homeworkItem: Homework) => {
-    const classObj = classes.find(c => c.id === homeworkItem.classId);
-    if (!classObj) return null;
-    return classObj.lessonPlan?.find(sp => sp.date === homeworkItem.date);
-  };
-
   const filteredHomework = useMemo(() => {
     let filtered = [...homework];
     
     if (filter === 'pending') {
-      filtered = filtered.filter(h => h.status === 'not yet' || h.status === 'no');
+      filtered = filtered.filter(h => h.status === 'submitted' || !h.gradedAt);
     } else if (filter === 'completed') {
-      filtered = filtered.filter(h => h.status === 'yes' || h.status === 'late');
+      filtered = filtered.filter(h => h.status === 'graded' || h.status === 'returned');
     }
     
-    return filtered.sort((a, b) => b.date.localeCompare(a.date));
+    return filtered.sort((a, b) => (b.dueDate || '').localeCompare(a.dueDate || ''));
   }, [homework, filter]);
 
   const stats = useMemo(() => {
     const total = homework.length;
-    const completed = homework.filter(h => h.status === 'yes' || h.status === 'late').length;
-    const pending = homework.filter(h => h.status === 'not yet' || h.status === 'no').length;
-    const late = homework.filter(h => h.status === 'late').length;
+    const completed = homework.filter(h => h.status === 'graded' || h.status === 'returned').length;
+    const pending = homework.filter(h => h.status === 'submitted' || !h.gradedAt).length;
+    const late = homework.filter(h => h.status === 'submitted' && h.dueDate && new Date(h.dueDate) < new Date()).length;
     return { total, completed, pending, late, rate: total > 0 ? Math.round((completed / total) * 100) : 0 };
   }, [homework]);
 
-  const getStatusIcon = (status: Homework['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'yes':
+      case 'graded':
+      case 'returned':
         return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-      case 'late':
+      case 'submitted':
         return <AlertCircle className="w-5 h-5 text-amber-600" />;
-      case 'no':
-        return <Circle className="w-5 h-5 text-red-600" />;
       default:
         return <Circle className="w-5 h-5 text-gray-400" />;
     }
   };
 
-  const getStatusLabel = (status: Homework['status']) => {
+  const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'yes': return 'Submitted';
-      case 'late': return 'Late';
-      case 'no': return 'Missing';
+      case 'graded': return 'Graded';
+      case 'returned': return 'Returned';
+      case 'submitted': return 'Submitted';
       default: return 'Pending';
     }
   };
 
-  const getStatusColor = (status: Homework['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'yes': return 'bg-green-100 text-green-700 border-green-200';
-      case 'late': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'no': return 'bg-red-100 text-red-700 border-red-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'graded':
+      case 'returned':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'submitted':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
@@ -119,62 +116,58 @@ export const HomeworkSection: React.FC<HomeworkSectionProps> = ({ homework, clas
 
       <div className="space-y-4">
         {filteredHomework.length > 0 ? (
-          filteredHomework.map((hw, idx) => {
-            const sessionInfo = getSessionInfo(hw);
-            return (
-              <motion.div
-                key={hw.id || idx}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-              >
-                <Card className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="mt-1">
-                        {getStatusIcon(hw.status)}
+          filteredHomework.map((hw, idx) => (
+            <motion.div
+              key={hw.id || idx}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+            >
+              <Card className="p-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1">
+                      {getStatusIcon(hw.status)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                          {hw.className || getClassName(hw.classId)}
+                        </span>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                            {getClassName(hw.classId)}
-                          </span>
-                          {sessionInfo && (
-                            <span className="text-xs text-gray-500">
-                              Session {sessionInfo.sessionNumber}
-                            </span>
-                          )}
-                        </div>
-                        {sessionInfo?.homework ? (
-                          <h3 className="text-lg font-bold text-gray-900">{sessionInfo.homework}</h3>
-                        ) : (
-                          <h3 className="text-lg font-bold text-gray-900">Homework Assignment</h3>
-                        )}
+                      <h3 className="text-lg font-bold text-gray-900">{hw.title}</h3>
+                      {hw.dueDate && (
                         <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            {format(parseISO(hw.date), 'MMM d, yyyy')}
+                            Due: {format(parseISO(hw.dueDate), 'MMM d, yyyy')}
                           </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <span className={`px-4 py-2 rounded-full text-sm font-bold border ${getStatusColor(hw.status)}`}>
-                        {getStatusLabel(hw.status)}
-                      </span>
-                      {hw.comments && (
-                        <div className="max-w-xs p-3 bg-gray-50 rounded-lg border border-gray-100">
-                          <p className="text-xs font-bold text-gray-400 uppercase mb-1">Teacher Feedback</p>
-                          <p className="text-sm text-gray-600 italic">"{hw.comments}"</p>
                         </div>
                       )}
                     </div>
                   </div>
-                </Card>
-              </motion.div>
-            );
-          })
+
+                  <div className="flex items-center gap-4">
+                    <span className={`px-4 py-2 rounded-full text-sm font-bold border ${getStatusColor(hw.status)}`}>
+                      {getStatusLabel(hw.status)}
+                    </span>
+                    {hw.pointsEarned !== null && hw.pointsEarned !== undefined && (
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-gray-400 uppercase">Score</p>
+                        <p className="text-lg font-black text-indigo-600">{hw.pointsEarned}/{hw.totalPoints}</p>
+                      </div>
+                    )}
+                    {hw.feedback && (
+                      <div className="max-w-xs p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <p className="text-xs font-bold text-gray-400 uppercase mb-1">Teacher Feedback</p>
+                        <p className="text-sm text-gray-600 italic">"{hw.feedback}"</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          ))
         ) : (
           <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
             <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />

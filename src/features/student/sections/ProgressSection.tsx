@@ -11,13 +11,16 @@ import {
 
 import { Card } from '../../../components/common/Card';
 import { StatCard } from '../../../components/common/StatCard';
-import { Student, Attendance, Homework, ExamScore } from '../../../types/models';
+import { TransformedStudent } from '../../../hooks/student/useStudentData';
+import { StudentAttendance } from '../../../hooks/student/useStudentAttendance';
+import { StudentHomework } from '../../../hooks/student/useStudentHomework';
+import { StudentExamScore } from '../../../hooks/student/useStudentExams';
 
 interface ProgressSectionProps {
-  student: Student | null;
-  attendance: Attendance[];
-  homework: Homework[];
-  exams: ExamScore[];
+  student: TransformedStudent | null;
+  attendance: StudentAttendance[];
+  homework: StudentHomework[];
+  exams: StudentExamScore[];
 }
 
 export const ProgressSection: React.FC<ProgressSectionProps> = ({
@@ -32,12 +35,12 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
       : 0;
 
     const homeworkRate = homework.length > 0
-      ? Math.round((homework.filter(h => h.status === 'yes' || h.status === 'late').length / homework.length) * 100)
+      ? Math.round((homework.filter(h => h.status === 'graded' || h.status === 'returned').length / homework.length) * 100)
       : 0;
 
     const examAverage = exams.length > 0
       ? exams.reduce((sum, e) => {
-          const scores = [e.writing, e.reading, e.speaking, e.listening].filter(s => s !== undefined);
+          const scores = [e.writing, e.reading, e.speaking, e.listening].filter((s): s is number => s !== null && s !== undefined);
           return sum + (scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0);
         }, 0) / exams.length
       : 0;
@@ -95,14 +98,14 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
             <Target className="w-8 h-8 text-indigo-600" />
           </div>
           <p className="text-sm text-gray-500 uppercase font-bold mb-1">Target Outcome</p>
-          <p className="text-4xl font-black text-gray-900">{student.targetOutcome}</p>
+          <p className="text-4xl font-black text-gray-900">{student.targetOutcome || 'N/A'}</p>
         </Card>
         <Card className="p-8 text-center">
           <div className="bg-green-100 p-4 rounded-2xl w-fit mx-auto mb-4">
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
           <p className="text-sm text-gray-500 uppercase font-bold mb-1">Entry Level</p>
-          <p className="text-4xl font-black text-gray-900">{student.entryLevel}</p>
+          <p className="text-4xl font-black text-gray-900">{student.entryLevel || 'N/A'}</p>
         </Card>
         <Card className="p-8 text-center">
           <div className="bg-amber-100 p-4 rounded-2xl w-fit mx-auto mb-4">
@@ -176,19 +179,19 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
             <div className="grid grid-cols-3 gap-4 pt-4">
               <div className="text-center p-3 bg-green-50 rounded-xl">
                 <p className="text-2xl font-black text-green-600">
-                  {homework.filter(h => h.status === 'yes').length}
+                  {homework.filter(h => h.status === 'graded' || h.status === 'returned').length}
                 </p>
-                <p className="text-xs text-gray-500">Submitted</p>
+                <p className="text-xs text-gray-500">Completed</p>
               </div>
               <div className="text-center p-3 bg-amber-50 rounded-xl">
                 <p className="text-2xl font-black text-amber-600">
-                  {homework.filter(h => h.status === 'late').length}
+                  {homework.filter(h => h.status === 'submitted' && !h.gradedAt).length}
                 </p>
-                <p className="text-xs text-gray-500">Late</p>
+                <p className="text-xs text-gray-500">Pending</p>
               </div>
               <div className="text-center p-3 bg-red-50 rounded-xl">
                 <p className="text-2xl font-black text-red-600">
-                  {homework.filter(h => h.status === 'no' || h.status === 'not yet').length}
+                  {homework.filter(h => !h.submittedAt).length}
                 </p>
                 <p className="text-xs text-gray-500">Missing</p>
               </div>

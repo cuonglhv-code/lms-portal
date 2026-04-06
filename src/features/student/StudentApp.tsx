@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, Link, useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   LogOut, 
@@ -41,6 +41,7 @@ interface StudentAppProps {
 
 export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const params = useParams();
   const { student, loading: studentLoading } = useStudentData(user.email || null);
   const { classes, loading: classesLoading } = useStudentClasses(student?.id || null);
@@ -136,7 +137,7 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
       case 'homework':
         return <HomeworkSection homework={homework} classes={classes} />;
       case 'exams':
-        return <ExamsSection exams={exams} classes={classes} />;
+        return <ExamsSection exams={exams} />;
       case 'progress':
         return (
           <ProgressSection
@@ -175,9 +176,9 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <AppHeader
         type="student"
-        userName={student?.display_name || user.email}
+        userName={student?.name || user.email}
         userEmail={user.email}
-        userAvatar={student?.avatar_url}
+        userAvatar={student?.avatarUrl}
         onLogout={onLogout}
       />
 
@@ -187,7 +188,7 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
           activeId={currentSection === 'class-detail' ? 'classes' : currentSection}
           onItemClick={(id) => {
             const item = navItems.find(n => n.id === id);
-            if (item) window.location.href = item.path;
+            if (item) navigate(item.path);
           }}
         />
 

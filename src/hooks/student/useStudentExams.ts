@@ -1,27 +1,27 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../supabase';
 
-interface ExamScoreData {
+export interface StudentExamScore {
   id: string;
-  exam_id: string;
-  student_id: string;
+  examId: string;
+  studentId: string;
+  examTitle: string;
+  examDate: string;
+  examType: string;
+  className: string;
+  writing: number | null;
+  reading: number | null;
+  speaking: number | null;
+  listening: number | null;
   score: number | null;
   percentage: number | null;
   grade: string | null;
   comments: string | null;
-  graded_at: string | null;
-  exam: {
-    id: string;
-    title: string;
-    exam_date: string;
-    exam_type: string;
-    class_id: string;
-    class?: { name: string };
-  };
+  gradedAt: string | null;
 }
 
 export function useStudentExams(studentId: string | null) {
-  const [exams, setExams] = useState<ExamScoreData[]>([]);
+  const [exams, setExams] = useState<StudentExamScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -51,7 +51,25 @@ export function useStudentExams(studentId: string | null) {
           .order('graded_at', { ascending: false });
 
         if (fetchError) throw fetchError;
-        setExams(data || []);
+        
+        setExams((data || []).map((e: any) => ({
+          id: e.id,
+          examId: e.exam_id,
+          studentId: e.student_id,
+          examTitle: e.exam?.title || '',
+          examDate: e.exam?.exam_date,
+          examType: e.exam?.exam_type,
+          className: e.exam?.class?.name || '',
+          writing: e.writing ?? e.score,
+          reading: e.reading ?? e.score,
+          speaking: e.speaking ?? e.score,
+          listening: e.listening ?? e.score,
+          score: e.score,
+          percentage: e.percentage,
+          grade: e.grade,
+          comments: e.comments,
+          gradedAt: e.graded_at,
+        })));
       } catch (err) {
         console.error('Error fetching exams:', err);
         setError(err as Error);

@@ -33,10 +33,8 @@ export const dbService = {
   },
 
   async addClass(data: Omit<Class, 'id'>, userId: string, role: UserRole) {
-    const { error } = await supabase.from('classes').insert({
+    const insertData: Record<string, unknown> = {
       name: data.name,
-      center: data.center,
-      teacher: data.teacher,
       total_sessions: data.totalSessions,
       sessions_per_week: data.sessionsPerWeek,
       start_date: data.startDate,
@@ -48,17 +46,26 @@ export const dbService = {
       notes: data.notes,
       target_outcome: data.targetOutcome,
       starting_level: data.startingLevel,
-    });
+    };
+    
+    if (data.center && data.center.length === 36) {
+      insertData.center_id = data.center;
+    }
+    if (data.teacher && data.teacher.length === 36) {
+      insertData.teacher_id = data.teacher;
+    }
+    
+    const { error } = await supabase.from('classes').insert(insertData);
     if (error) throw error;
   },
 
   async updateClass(id: string, data: Partial<Class>, userId: string, role: UserRole) {
     const updateData: Record<string, unknown> = {};
     if (data.name) updateData.name = data.name;
-    if (data.center) updateData.center = data.center;
-    if (data.teacher) updateData.teacher = data.teacher;
-    if (data.totalSessions) updateData.total_sessions = data.totalSessions;
-    if (data.sessionsPerWeek) updateData.sessions_per_week = data.sessionsPerWeek;
+    if (data.center && data.center.length === 36) updateData.center_id = data.center;
+    if (data.teacher && data.teacher.length === 36) updateData.teacher_id = data.teacher;
+    if (data.totalSessions !== undefined) updateData.total_sessions = data.totalSessions;
+    if (data.sessionsPerWeek !== undefined) updateData.sessions_per_week = data.sessionsPerWeek;
     if (data.startDate) updateData.start_date = data.startDate;
     if (data.classDays) updateData.class_days = data.classDays;
     if (data.startTime) updateData.start_time = data.startTime;
@@ -66,8 +73,8 @@ export const dbService = {
     if (data.lessonPlan) updateData.lesson_plan = data.lessonPlan;
     if (data.examTypes) updateData.exam_types = data.examTypes;
     if (data.notes !== undefined) updateData.notes = data.notes;
-    if (data.targetOutcome) updateData.target_outcome = data.targetOutcome;
-    if (data.startingLevel) updateData.starting_level = data.startingLevel;
+    if (data.targetOutcome !== undefined) updateData.target_outcome = data.targetOutcome;
+    if (data.startingLevel !== undefined) updateData.starting_level = data.startingLevel;
     const { error } = await supabase.from('classes').update(updateData).eq('id', id);
     if (error) throw error;
   },
@@ -110,31 +117,82 @@ export const dbService = {
   },
 
   async updateHomework(studentId: string, classId: string, date: string, status: Homework['status'], userId: string, role: UserRole, mark?: number, comments?: string) {
-    const { data: existing } = await supabase.from('homework')
-      .select('id').eq('student_id', studentId).eq('class_id', classId).eq('date', date).single();
+    const homeworkDate = date.includes('T') ? date : `${date}T00:00:00`;
+    const { data: existingHomework } = await supabase.from('homework')
+      .select('id').eq('class_id', classId).eq('due_date', homeworkDate).single();
 
-    const data = { student_id: studentId, class_id: classId, date, status, mark, comments };
-
-    if (existing) {
-      const { error } = await supabase.from('homework').update(data).eq('id', existing.id);
-      if (error) throw error;
+    if (!existingHomework) {
+      const { data: newHomework, error: hwError } = await supabase.from('homework').insert({
+        class_id: classId,
+        title: `Homework ${date}`,
+        due_date: homeworkDate,
+        created_by: userId,
+      }).select('id').single();
+      
+      if (hwError) throw hwError;
+      if (!newHomework) throw new Error('Failed to create homework record');
+      
+      const { error: subError } = await supabase.from('homework_submissions').upsert({
+        homework_id: newHomework.id,
+        student_id: studentId,
+        points_earned: mark,
+        feedback: comments,
+        status: status === 'yes' ? 'graded' : status === 'no' ? 'submitted' : status === 'late' ? 'submitted' : 'submitted',
+        graded_by: mark !== undefined ? userId : null,
+        graded_at: mark !== undefined ? new Date().toISOString() : null,
+      }, { onConflict: 'homework_id,student_id' });
+      
+      if (subError) throw subError;
     } else {
-      const { error } = await supabase.from('homework').insert(data);
-      if (error) throw error;
+      const { data: existingSubmission } = await supabase.from('homework_submissions')
+        .select('id').eq('homework_id', existingHomework.id).eq('student_id', studentId).single();
+
+      const submissionData = {
+        homework_id: existingHomework.id,
+        student_id: studentId,
+        points_earned: mark,
+        feedback: comments,
+        status: status === 'yes' ? 'graded' : status === 'no' ? 'submitted' : status === 'late' ? 'submitted' : 'submitted',
+        graded_by: mark !== undefined ? userId : null,
+        graded_at: mark !== undefined ? new Date().toISOString() : null,
+      };
+
+      if (existingSubmission) {
+        const { error } = await supabase.from('homework_submissions').update(submissionData).eq('id', existingSubmission.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('homework_submissions').insert(submissionData);
+        if (error) throw error;
+      }
     }
   },
 
-  async updateExamScore(studentId: string, date: string, field: string, value: any, userId: string, role: UserRole) {
-    const { data: existing } = await supabase.from('exams')
-      .select('id').eq('student_id', studentId).eq('date', date).single();
+  async updateExamScore(studentId: string, examId: string, field: string, value: number, userId: string, role: UserRole) {
+    const skillFields = ['writing', 'reading', 'speaking', 'listening'];
+    
+    const { data: existing } = await supabase.from('exam_scores')
+      .select('id').eq('student_id', studentId).eq('exam_id', examId).single();
 
-    const data = { student_id: studentId, date, [field]: value };
+    const updateData: Record<string, unknown> = {
+      student_id: studentId,
+      exam_id: examId,
+      graded_by: userId,
+      graded_at: new Date().toISOString(),
+    };
+
+    if (skillFields.includes(field)) {
+      updateData[field] = value;
+    } else if (field === 'comment') {
+      updateData.comments = value;
+    } else {
+      updateData.score = value;
+    }
 
     if (existing) {
-      const { error } = await supabase.from('exams').update(data).eq('id', existing.id);
+      const { error } = await supabase.from('exam_scores').update(updateData).eq('id', existing.id);
       if (error) throw error;
     } else {
-      const { error } = await supabase.from('exams').insert(data);
+      const { error } = await supabase.from('exam_scores').insert(updateData);
       if (error) throw error;
     }
   },

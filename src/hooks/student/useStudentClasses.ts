@@ -2,29 +2,37 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../supabase';
 import { useStudentEnrollments } from './useStudentData';
 
-interface ClassData {
+export interface StudentClass {
   id: string;
   name: string;
   description?: string;
   subject?: string;
-  grade_level?: string;
-  schedule: Array<{ day: string; startTime: string; endTime: string; room?: string }>;
-  teacher_id: string;
-  teacher?: { display_name: string; email: string };
-  max_students: number;
+  center?: string;
+  teacher?: string;
+  totalSessions?: number;
+  startingLevel?: string;
+  targetOutcome?: number;
+  sessionsPerWeek?: number;
+  startDate?: string;
+  startTime?: string;
+  endTime?: string;
+  classDays: string[];
+  lessonPlan: Array<{ sessionNumber: number; date: string; contents: string; homework?: string; isExam?: boolean; deadline?: string }>;
+  examTypes: string[];
+  notes?: string;
   status: string;
-  created_at: string;
+  createdAt: string;
 }
 
 export function useStudentClasses(studentId: string | null) {
   const { enrollments, loading: enrollmentsLoading } = useStudentEnrollments(studentId);
-  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [classes, setClasses] = useState<StudentClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (enrollmentsLoading || enrollments.length === 0) {
-      if (enrollmentsLoading) return;
+    if (enrollmentsLoading) return;
+    if (!enrollments || enrollments.length === 0) {
       setClasses([]);
       setLoading(false);
       return;
@@ -41,13 +49,37 @@ export function useStudentClasses(studentId: string | null) {
             teacher:users!classes_teacher_id_fkey (
               display_name,
               email
+            ),
+            center:centers!classes_center_id_fkey (
+              name
             )
           `)
           .in('id', classIds)
           .eq('status', 'active');
 
         if (fetchError) throw fetchError;
-        setClasses(data || []);
+        
+        setClasses((data || []).map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          description: c.description,
+          subject: c.subject,
+          center: c.center?.name || '',
+          teacher: c.teacher?.display_name || '',
+          totalSessions: c.total_sessions,
+          startingLevel: c.starting_level,
+          targetOutcome: c.target_outcome,
+          sessionsPerWeek: c.sessions_per_week,
+          startDate: c.start_date,
+          startTime: c.start_time,
+          endTime: c.end_time,
+          classDays: c.class_days || [],
+          lessonPlan: c.lesson_plan || [],
+          examTypes: c.exam_types || [],
+          notes: c.notes,
+          status: c.status,
+          createdAt: c.created_at,
+        })));
       } catch (err) {
         console.error('Error fetching classes:', err);
         setError(err as Error);
@@ -59,47 +91,5 @@ export function useStudentClasses(studentId: string | null) {
     fetchClasses();
   }, [enrollments, enrollmentsLoading]);
 
-  return { classes, loading: loading || enrollmentsLoading, error };
-}
-
-export function useClassById(classId: string | null) {
-  const [classObj, setClassObj] = useState<ClassData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    if (!classId) {
-      setClassObj(null);
-      setLoading(false);
-      return;
-    }
-
-    const fetchClass = async () => {
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('classes')
-          .select(`
-            *,
-            teacher:users!classes_teacher_id_fkey (
-              display_name,
-              email
-            )
-          `)
-          .eq('id', classId)
-          .single();
-
-        if (fetchError) throw fetchError;
-        setClassObj(data);
-      } catch (err) {
-        console.error('Error fetching class:', err);
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClass();
-  }, [classId]);
-
-  return { classObj, loading, error };
+  return { classes, loading, error };
 }

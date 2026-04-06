@@ -4,42 +4,25 @@ import { motion } from 'motion/react';
 import { GraduationCap, TrendingUp, MessageSquare } from 'lucide-react';
 
 import { Card } from '../../../components/common/Card';
-import { ExamScore, Class } from '../../../types/models';
+import { StudentExamScore } from '../../../hooks/student/useStudentExams';
 
 interface ExamsSectionProps {
-  exams: ExamScore[];
-  classes: Class[];
+  exams: StudentExamScore[];
 }
 
 interface SkillScore {
   name: string;
   shortName: string;
-  value: number;
+  value: number | null;
   color: string;
 }
 
-export const ExamsSection: React.FC<ExamsSectionProps> = ({ exams, classes }) => {
-  const getClassName = (exam: ExamScore) => {
-    for (const classObj of classes) {
-      const session = classObj.lessonPlan?.find(sp => sp.date === exam.date && sp.isExam);
-      if (session) return classObj.name;
-    }
-    return 'General';
-  };
-
-  const getSessionInfo = (exam: ExamScore) => {
-    for (const classObj of classes) {
-      const session = classObj.lessonPlan?.find(sp => sp.date === exam.date && sp.isExam);
-      if (session) return session;
-    }
-    return null;
-  };
-
+export const ExamsSection: React.FC<ExamsSectionProps> = ({ exams }) => {
   const stats = useMemo(() => {
     if (exams.length === 0) return { average: 0, total: 0, highest: 0, lowest: 10 };
     
     const averages = exams.map(e => {
-      const scores = [e.writing, e.reading, e.speaking, e.listening].filter(s => s !== undefined);
+      const scores = [e.writing, e.reading, e.speaking, e.listening].filter((s): s is number => s !== null && s !== undefined);
       return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
     });
     
@@ -51,21 +34,23 @@ export const ExamsSection: React.FC<ExamsSectionProps> = ({ exams, classes }) =>
     };
   }, [exams]);
 
-  const getSkillScore = (exam: ExamScore): SkillScore[] => [
-    { name: 'Writing', shortName: 'WR', value: exam.writing || 0, color: 'indigo' },
-    { name: 'Reading', shortName: 'RD', value: exam.reading || 0, color: 'emerald' },
-    { name: 'Speaking', shortName: 'SP', value: exam.speaking || 0, color: 'amber' },
-    { name: 'Listening', shortName: 'LS', value: exam.listening || 0, color: 'rose' },
+  const getSkillScore = (exam: StudentExamScore): SkillScore[] => [
+    { name: 'Writing', shortName: 'WR', value: exam.writing, color: 'indigo' },
+    { name: 'Reading', shortName: 'RD', value: exam.reading, color: 'emerald' },
+    { name: 'Speaking', shortName: 'SP', value: exam.speaking, color: 'amber' },
+    { name: 'Listening', shortName: 'LS', value: exam.listening, color: 'rose' },
   ];
 
-  const getScoreColor = (value: number) => {
+  const getScoreColor = (value: number | null) => {
+    if (value === null) return 'text-gray-400';
     if (value >= 8) return 'text-green-600';
     if (value >= 6) return 'text-indigo-600';
     if (value >= 4) return 'text-amber-600';
     return 'text-red-600';
   };
 
-  const getScoreBgColor = (value: number) => {
+  const getScoreBgColor = (value: number | null) => {
+    if (value === null) return 'bg-gray-100';
     if (value >= 8) return 'bg-green-100';
     if (value >= 6) return 'bg-indigo-100';
     if (value >= 4) return 'bg-amber-100';
@@ -101,10 +86,9 @@ export const ExamsSection: React.FC<ExamsSectionProps> = ({ exams, classes }) =>
       <div className="space-y-4">
         {exams.length > 0 ? (
           exams.map((exam, idx) => {
-            const className = getClassName(exam);
-            const sessionInfo = getSessionInfo(exam);
             const skills = getSkillScore(exam);
-            const average = skills.reduce((sum, s) => sum + s.value, 0) / skills.length;
+            const validScores = skills.map(s => s.value).filter((v): v is number => v !== null);
+            const average = validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : 0;
 
             return (
               <motion.div
@@ -118,23 +102,25 @@ export const ExamsSection: React.FC<ExamsSectionProps> = ({ exams, classes }) =>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-4">
                         <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                          {className}
+                          {exam.className || 'General'}
                         </span>
                         <span className="text-sm text-gray-500">
-                          {sessionInfo ? `Session ${sessionInfo.sessionNumber}` : 'Exam'}
+                          {exam.examTitle}
                         </span>
                       </div>
                       
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        {format(parseISO(exam.date), 'MMMM d, yyyy')}
-                      </h3>
+                      {exam.examDate && (
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          {format(parseISO(exam.examDate), 'MMMM d, yyyy')}
+                        </h3>
+                      )}
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
                         {skills.map((skill) => (
                           <div key={skill.shortName} className={`p-3 rounded-xl ${getScoreBgColor(skill.value)}`}>
                             <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">{skill.shortName}</p>
                             <p className={`text-2xl font-black ${getScoreColor(skill.value)}`}>
-                              {skill.value || '-'}
+                              {skill.value !== null ? skill.value : '-'}
                             </p>
                           </div>
                         ))}
@@ -149,13 +135,13 @@ export const ExamsSection: React.FC<ExamsSectionProps> = ({ exams, classes }) =>
                         </p>
                       </div>
 
-                      {exam.comment && (
+                      {exam.comments && (
                         <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 max-w-xs">
                           <p className="text-xs font-bold text-gray-400 uppercase mb-2 flex items-center gap-1">
                             <MessageSquare className="w-3 h-3" />
                             Teacher Feedback
                           </p>
-                          <p className="text-sm text-gray-600 italic">"{exam.comment}"</p>
+                          <p className="text-sm text-gray-600 italic">"{exam.comments}"</p>
                         </div>
                       )}
                     </div>

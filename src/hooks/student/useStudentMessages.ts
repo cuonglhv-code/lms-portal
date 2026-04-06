@@ -1,61 +1,70 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../supabase';
 
-interface Announcement {
+export interface StudentAnnouncement {
   id: string;
   title: string | null;
   content: string;
-  message_type: string;
-  class_id: string | null;
-  created_at: string;
-  sender?: { display_name: string };
-  class?: { name: string };
+  messageType: string;
+  classId: string | null;
+  createdAt: string;
+  senderName?: string;
+  className?: string;
 }
 
-interface Message {
+export interface StudentMessage {
   id: string;
-  sender_id: string | null;
-  sender_type: string;
-  recipient_id: string;
+  senderId: string | null;
+  senderType: string;
+  recipientId: string;
   content: string;
-  message_type: string;
-  is_read: boolean;
-  read_at: string | null;
-  created_at: string;
-  reply_to?: string;
-  sender?: { display_name: string };
+  messageType: string;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+  replyTo?: string;
+  senderName?: string;
 }
 
 export function useStudentAnnouncements(studentId: string | null, classIds: string[] = []) {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcements, setAnnouncements] = useState<StudentAnnouncement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const conditions = ['message_type.eq.announcement', '(recipient_type.eq.all'];
+        let query = supabase
+          .from('messages')
+          .select('*')
+          .eq('message_type', 'announcement');
 
         if (studentId) {
-          conditions.push(`,recipient_type.eq.student,recipient_id.eq.${studentId}`);
+          query = query.or(`recipient_type.eq.all,and(recipient_type.eq.student,recipient_id.eq.${studentId})`);
+        } else {
+          query = query.eq('recipient_type', 'all');
         }
 
         if (classIds.length > 0) {
-          conditions.push(`,class_id.in.(${classIds.join(',')})`);
+          query = query.or(`class_id.in.(${classIds.join(',')}),recipient_type.eq.all`);
         }
 
-        conditions.push(')');
-
-        const { data, error: fetchError } = await supabase
-          .from('messages')
-          .select('*')
-          .or(conditions.join(','))
+        const { data, error: fetchError } = await query
           .order('created_at', { ascending: false })
           .limit(50);
 
         if (fetchError) throw fetchError;
-        setAnnouncements(data || []);
+        
+        setAnnouncements((data || []).map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          content: a.content,
+          messageType: a.message_type,
+          classId: a.class_id,
+          createdAt: a.created_at,
+          senderName: a.sender_name,
+          className: a.class_name,
+        })));
       } catch (err) {
         console.error('Error fetching announcements:', err);
         setError(err as Error);
@@ -65,15 +74,13 @@ export function useStudentAnnouncements(studentId: string | null, classIds: stri
     };
 
     fetchAnnouncements();
-
-    return () => {};
   }, [studentId, classIds.join(',')]);
 
   return { announcements, loading, error };
 }
 
 export function useStudentMessages(studentId: string | null) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<StudentMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -98,7 +105,19 @@ export function useStudentMessages(studentId: string | null) {
 
         if (fetchError) throw fetchError;
         if (isSubscribed) {
-          setMessages(data || []);
+          setMessages((data || []).map((m: any) => ({
+            id: m.id,
+            senderId: m.sender_id,
+            senderType: m.sender_type,
+            recipientId: m.recipient_id,
+            content: m.content,
+            messageType: m.message_type,
+            isRead: m.is_read,
+            readAt: m.read_at,
+            createdAt: m.created_at,
+            replyTo: m.reply_to,
+            senderName: m.sender_name,
+          })));
         }
       } catch (err) {
         console.error('Error fetching messages:', err);

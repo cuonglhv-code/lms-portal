@@ -42,8 +42,8 @@ export function useTeacherActions() {
   const updateHomework = useCallback((studentId: string, classId: string, date: string, status: Homework['status'], mark?: number, comments?: string) => 
     dbService.updateHomework(studentId, classId, date, status, userId, userRole, mark, comments), [userId, userRole]);
 
-  const updateExamScore = useCallback((studentId: string, date: string, field: string, value: any) => 
-    dbService.updateExamScore(studentId, date, field, value, userId, userRole), [userId, userRole]);
+  const updateExamScore = useCallback((studentId: string, examId: string, field: string, value: any) => 
+    dbService.updateExamScore(studentId, examId, field, value, userId, userRole), [userId, userRole]);
 
   const addAnnouncement = useCallback((title: string, content: string, target: string) => 
     dbService.addAnnouncement(title, content, target, userId, userRole), [userId, userRole]);
@@ -59,7 +59,14 @@ export function useTeacherActions() {
 
   const importStudentsBatch = useCallback(async (students: Array<{ name: string; email: string; phone?: string; entryLevel?: string; targetOutcome?: string }>) => {
     for (const s of students) {
-      await dbService.addStudent(s, userId, userRole);
+      await dbService.addStudent({
+        name: s.name,
+        email: s.email,
+        phone: s.phone || '',
+        entryLevel: s.entryLevel || '',
+        targetOutcome: s.targetOutcome || '',
+        parentName: '',
+      }, userId, userRole);
     }
   }, [userId, userRole]);
 
@@ -78,6 +85,7 @@ export function useTeacherActions() {
         sessionsPerWeek: c.sessionsPerWeek || 2,
         targetOutcome: c.targetOutcome || 0,
         lessonPlan: [],
+        examTypes: [],
         notes: '',
       }, userId, userRole);
     }

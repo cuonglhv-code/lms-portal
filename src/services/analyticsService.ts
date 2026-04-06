@@ -108,19 +108,25 @@ export const analyticsService = {
 
     for (const enrollment of enrollments) {
       const classId = enrollment.class_id;
+      const className = (enrollment as any).classes?.name || 'Unknown';
 
-      const [attendance, homework, exams] = await Promise.all([
+      const [attendance, homeworkSubmissions, homeworkTotal, exams] = await Promise.all([
         supabase.from('attendance').select('status').eq('student_id', studentId).eq('class_id', classId),
-        supabase.from('homework_submissions').select('status').eq('student_id', studentId).eq('homework(class_id).class_id', classId),
-        supabase.from('exam_scores').select('score, percentage').eq('student_id', studentId).eq('exam_id', enrollment.class_id),
+        supabase.from('homework_submissions').select('status').eq('student_id', studentId).in('homework_id', 
+          (await supabase.from('homework').select('id').eq('class_id', classId)).data?.map((h: any) => h.id) || []
+        ),
+        supabase.from('homework').select('id', { count: 'exact', head: true }).eq('class_id', classId),
+        supabase.from('exam_scores').select('score, percentage').eq('student_id', studentId).in('exam_id',
+          (await supabase.from('exams').select('id').eq('class_id', classId)).data?.map((e: any) => e.id) || []
+        ),
       ]);
 
       const totalAtt = attendance.data?.length || 0;
       const presentAtt = attendance.data?.filter(a => a.status === 'present' || a.status === 'late').length || 0;
       const attendanceRate = totalAtt > 0 ? Math.round((presentAtt / totalAtt) * 100) : 0;
 
-      const totalHw = homework.data?.length || 0;
-      const completedHw = homework.data?.filter(h => h.status === 'submitted' || h.status === 'graded').length || 0;
+      const totalHw = homeworkSubmissions.data?.length || 0;
+      const completedHw = homeworkSubmissions.data?.filter(h => h.status === 'submitted' || h.status === 'graded').length || 0;
       const homeworkRate = totalHw > 0 ? Math.round((completedHw / totalHw) * 100) : 0;
 
       const scores = exams.data?.filter(e => e.percentage !== null).map(e => e.percentage) || [];
