@@ -4,53 +4,72 @@ import { Permission, Resource, PermissionString } from '../types/permissions';
 
 const PERMISSION_MATRIX: Record<UserRole, Permission[]> = {
   [UserRole.Admin]: [
-    { resource: 'user', action: 'read', scope: 'all' },
-    { resource: 'user', action: 'create', scope: 'all' },
-    { resource: 'user', action: 'update', scope: 'all' },
-    { resource: 'user', action: 'delete', scope: 'all' },
-    { resource: 'student', action: 'read', scope: 'all' },
-    { resource: 'student', action: 'create', scope: 'all' },
-    { resource: 'student', action: 'update', scope: 'all' },
-    { resource: 'student', action: 'delete', scope: 'all' },
-    { resource: 'class', action: 'read', scope: 'all' },
-    { resource: 'class', action: 'create', scope: 'all' },
-    { resource: 'class', action: 'update', scope: 'all' },
-    { resource: 'class', action: 'delete', scope: 'all' },
-    { resource: 'homework', action: 'read', scope: 'all' },
-    { resource: 'homework', action: 'create', scope: 'all' },
-    { resource: 'homework', action: 'update', scope: 'all' },
-    { resource: 'homework', action: 'delete', scope: 'all' },
-    { resource: 'exam', action: 'read', scope: 'all' },
-    { resource: 'exam', action: 'create', scope: 'all' },
-    { resource: 'exam', action: 'update', scope: 'all' },
-    { resource: 'exam', action: 'delete', scope: 'all' },
-    { resource: 'attendance', action: 'read', scope: 'all' },
-    { resource: 'attendance', action: 'update', scope: 'all' },
-    { resource: 'report', action: 'export', scope: 'all' },
+    { resource: 'user', action: 'read' },
+    { resource: 'user', action: 'create' },
+    { resource: 'user', action: 'update' },
+    { resource: 'user', action: 'delete' },
+    { resource: 'student', action: 'read' },
+    { resource: 'student', action: 'create' },
+    { resource: 'student', action: 'update' },
+    { resource: 'student', action: 'delete' },
+    { resource: 'class', action: 'read' },
+    { resource: 'class', action: 'create' },
+    { resource: 'class', action: 'update' },
+    { resource: 'class', action: 'delete' },
+    { resource: 'class', action: 'enroll' },
+    { resource: 'homework', action: 'read' },
+    { resource: 'homework', action: 'create' },
+    { resource: 'homework', action: 'update' },
+    { resource: 'homework', action: 'delete' },
+    { resource: 'homework', action: 'grade' },
+    { resource: 'exam', action: 'read' },
+    { resource: 'exam', action: 'create' },
+    { resource: 'exam', action: 'update' },
+    { resource: 'exam', action: 'delete' },
+    { resource: 'exam', action: 'grade' },
+    { resource: 'attendance', action: 'read' },
+    { resource: 'attendance', action: 'update' },
+    { resource: 'report', action: 'read' },
+    { resource: 'report', action: 'export' },
+    { resource: 'message', action: 'read' },
+    { resource: 'message', action: 'create' },
+    { resource: 'center', action: 'read' },
+    { resource: 'center', action: 'create' },
+    { resource: 'center', action: 'update' },
+    { resource: 'center', action: 'delete' },
   ],
   
   [UserRole.Teacher]: [
-    { resource: 'class', action: 'read', scope: 'class' },
-    { resource: 'class', action: 'update', scope: 'class' },
-    { resource: 'student', action: 'read', scope: 'class' },
-    { resource: 'student', action: 'update', scope: 'class' },
-    { resource: 'homework', action: 'read', scope: 'class' },
-    { resource: 'homework', action: 'create', scope: 'class' },
-    { resource: 'homework', action: 'update', scope: 'class' },
-    { resource: 'exam', action: 'read', scope: 'class' },
-    { resource: 'exam', action: 'create', scope: 'class' },
-    { resource: 'exam', action: 'update', scope: 'class' },
-    { resource: 'attendance', action: 'read', scope: 'class' },
-    { resource: 'attendance', action: 'update', scope: 'class' },
-    { resource: 'report', action: 'export', scope: 'class' },
+    { resource: 'class', action: 'read' },
+    { resource: 'class', action: 'update' },
+    { resource: 'class', action: 'enroll' },
+    { resource: 'student', action: 'read' },
+    { resource: 'student', action: 'update' },
+    { resource: 'homework', action: 'read' },
+    { resource: 'homework', action: 'create' },
+    { resource: 'homework', action: 'update' },
+    { resource: 'homework', action: 'grade' },
+    { resource: 'exam', action: 'read' },
+    { resource: 'exam', action: 'create' },
+    { resource: 'exam', action: 'update' },
+    { resource: 'exam', action: 'grade' },
+    { resource: 'attendance', action: 'read' },
+    { resource: 'attendance', action: 'update' },
+    { resource: 'report', action: 'read' },
+    { resource: 'report', action: 'export' },
+    { resource: 'message', action: 'read' },
+    { resource: 'message', action: 'create' },
   ],
   
   [UserRole.Student]: [
-    { resource: 'homework', action: 'read', scope: 'own' },
-    { resource: 'homework', action: 'update', scope: 'own' },
-    { resource: 'exam', action: 'read', scope: 'own' },
-    { resource: 'attendance', action: 'read', scope: 'own' },
-    { resource: 'class', action: 'read', scope: 'own' },
+    { resource: 'homework', action: 'read' },
+    { resource: 'homework', action: 'submit' },
+    { resource: 'exam', action: 'read' },
+    { resource: 'attendance', action: 'read' },
+    { resource: 'class', action: 'read' },
+    { resource: 'message', action: 'read' },
+    { resource: 'message', action: 'create' },
+    { resource: 'report', action: 'read' },
   ],
 };
 
@@ -64,12 +83,10 @@ export class AccessControlService {
   static hasPermission(ctx: AccessContext, permission: PermissionString): boolean {
     const permissions = PERMISSION_MATRIX[ctx.role] || [];
     
-    const [resource, action, scope] = permission.split(':') as [Resource, string, string | undefined];
+    const [resource, action] = permission.split(':') as [Resource, string];
     
     return permissions.some(p => 
-      p.resource === resource && 
-      p.action === action && 
-      (p.scope === scope || p.scope === 'all')
+      p.resource === resource && p.action === action
     );
   }
 
@@ -116,7 +133,7 @@ export class AccessControlService {
     }
     
     if (ctx.role === UserRole.Student) {
-      if (resource === 'homework' || resource === 'exam' || resource === 'attendance') {
+      if (resource === 'homework' || resource === 'exam' || resource === 'attendance' || resource === 'class') {
         const { data: enrollment } = await supabase
           .from('student_classes')
           .select('id')
@@ -131,5 +148,11 @@ export class AccessControlService {
 
   static getPermissions(role: UserRole): Permission[] {
     return PERMISSION_MATRIX[role] || [];
+  }
+
+  static canPerform(userPermissions: Permission[], required: Permission): boolean {
+    return userPermissions.some(
+      (p) => p.resource === required.resource && p.action === required.action
+    );
   }
 }
