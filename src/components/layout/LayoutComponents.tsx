@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, GraduationCap, Users, LogOut, Menu, X } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import { Button } from '../common/Button';
 
 interface AppHeaderProps {
@@ -151,7 +152,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, activeId, onItemClick, 
             );
 
             if (item.path) {
-              const { NavLink } = require('react-router-dom');
               return (
                 <NavLink
                   key={item.id}
