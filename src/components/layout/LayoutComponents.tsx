@@ -97,6 +97,7 @@ interface NavItem {
   id: string;
   label: string;
   icon: React.ElementType;
+  path?: string;
   badge?: number;
 }
 
@@ -131,8 +132,45 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, activeId, onItemClick, 
         <nav className="flex md:flex-col gap-1 p-4 overflow-y-auto h-full">
           {items.map((item) => {
             const Icon = item.icon;
-            const isActive = activeId === item.id;
+            
+            // We use NavLink if path is provided so React-Router manages active state robustly
+            // Fallback to activeId logic if no path is provided
+            const renderButtonContent = (isActive: boolean) => (
+              <>
+                <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className={`
+                    px-2 py-0.5 rounded-full text-xs font-semibold
+                    ${isActive ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'}
+                  `}>
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </>
+            );
 
+            if (item.path) {
+              const { NavLink } = require('react-router-dom');
+              return (
+                <NavLink
+                  key={item.id}
+                  to={item.path}
+                  onClick={() => { onClose?.(); }}
+                  className={({ isActive }: any) => `
+                    flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap w-full
+                    ${isActive
+                      ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }
+                  `}
+                >
+                  {({ isActive }: any) => renderButtonContent(isActive)}
+                </NavLink>
+              );
+            }
+
+            const isActive = activeId === item.id;
             return (
               <motion.button
                 key={item.id}
@@ -149,16 +187,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, activeId, onItemClick, 
                   }
                 `}
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
-                <span className="flex-1 text-left">{item.label}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className={`
-                    px-2 py-0.5 rounded-full text-xs font-semibold
-                    ${isActive ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'}
-                  `}>
-                    {item.badge > 99 ? '99+' : item.badge}
-                  </span>
-                )}
+                {renderButtonContent(isActive)}
               </motion.button>
             );
           })}

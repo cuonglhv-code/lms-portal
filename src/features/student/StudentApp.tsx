@@ -1,13 +1,12 @@
 import React from 'react';
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   LogOut, 
-  GraduationCap, 
+  GraduationCap as ExamsIcon, 
   LayoutDashboard, 
   Building2, 
   BookOpen, 
-  GraduationCap as ExamsIcon,
   TrendingUp,
   Bell,
   HelpCircle,
@@ -40,9 +39,8 @@ interface StudentAppProps {
 }
 
 export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const params = useParams();
+  const location = useLocation();
   const { student, loading: studentLoading } = useStudentData(user.email || null);
   const { classes, loading: classesLoading } = useStudentClasses(student?.id || null);
   const { homework, loading: homeworkLoading } = useStudentHomework(student?.id || null);
@@ -86,23 +84,8 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
     );
   }
 
-  const getCurrentSection = () => {
-    const path = location.pathname;
-    if (path === '/student' || path === '/student/' || path === '/') return 'dashboard';
-    if (path.includes('/student/classes/') && params.classId) return 'class-detail';
-    if (path.includes('/student/classes')) return 'classes';
-    if (path.includes('/student/homework')) return 'homework';
-    if (path.includes('/student/exams')) return 'exams';
-    if (path.includes('/student/progress')) return 'progress';
-    if (path.includes('/student/messages')) return 'communication';
-    if (path.includes('/student/profile')) return 'profile';
-    return 'dashboard';
-  };
-
-  const currentSection = getCurrentSection();
-
   const navItems = [
-    { id: 'dashboard', path: '/student', icon: LayoutDashboard, label: 'Dashboard' },
+    { id: 'dashboard', path: '/student/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'classes', path: '/student/classes', icon: Building2, label: 'My Classes' },
     { id: 'homework', path: '/student/homework', icon: BookOpen, label: 'Homework' },
     { id: 'exams', path: '/student/exams', icon: ExamsIcon, label: 'My Exams' },
@@ -111,65 +94,15 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
     { id: 'profile', path: '/student/profile', icon: User, label: 'Profile' },
   ];
 
-  const renderContent = () => {
-    switch (currentSection) {
-      case 'dashboard':
-        return (
-          <DashboardSection
-            classes={classes}
-            announcements={announcements}
-            attendance={attendance}
-            exams={exams}
-            studentName={student.name}
-          />
-        );
-      case 'classes':
-        return <ClassesSection classes={classes} />;
-      case 'class-detail':
-        const classObj = classes.find(c => c.id === params.classId);
-        return (
-          <ClassDetailSection
-            classObj={classObj || null}
-            homework={homework}
-            loading={false}
-          />
-        );
-      case 'homework':
-        return <HomeworkSection homework={homework} classes={classes} />;
-      case 'exams':
-        return <ExamsSection exams={exams} />;
-      case 'progress':
-        return (
-          <ProgressSection
-            student={student}
-            attendance={attendance}
-            homework={homework}
-            exams={exams}
-          />
-        );
-      case 'communication':
-        return (
-          <CommunicationSection
-            announcements={announcements}
-            messages={messages}
-            studentId={student.id}
-            studentName={student.name}
-            onSendMessage={handleSendMessage}
-          />
-        );
-      case 'profile':
-        return <StudentProfileSection studentId={student.id} />;
-      default:
-        return (
-          <DashboardSection
-            classes={classes}
-            announcements={announcements}
-            attendance={attendance}
-            exams={exams}
-            studentName={student.name}
-          />
-        );
-    }
+  const getActiveTab = () => {
+    const p = location.pathname;
+    if (p.includes('/student/classes')) return 'classes';
+    if (p.includes('/student/homework')) return 'homework';
+    if (p.includes('/student/exams')) return 'exams';
+    if (p.includes('/student/progress')) return 'progress';
+    if (p.includes('/student/messages')) return 'communication';
+    if (p.includes('/student/profile')) return 'profile';
+    return 'dashboard';
   };
 
   return (
@@ -185,7 +118,7 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
       <div className="flex-1 flex flex-col md:flex-row">
         <Sidebar
           items={navItems}
-          activeId={currentSection === 'class-detail' ? 'classes' : currentSection}
+          activeId={getActiveTab()}
           onItemClick={(id) => {
             const item = navItems.find(n => n.id === id);
             if (item) navigate(item.path);
@@ -195,13 +128,57 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
         <PageContainer>
           <AnimatePresence mode="wait">
             <motion.div
-              key={currentSection + (params.classId || '')}
+              key={location.pathname}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
+              className="h-full"
             >
-              {renderContent()}
+              <Routes>
+                <Route path="dashboard" element={
+                  <DashboardSection
+                    classes={classes}
+                    announcements={announcements}
+                    attendance={attendance}
+                    exams={exams}
+                    studentName={student.name}
+                  />
+                } />
+                <Route path="classes" element={
+                  <ClassesSection classes={classes} />
+                } />
+                <Route path="classes/:classId" element={
+                  <ClassDetailWrapper classes={classes} homework={homework} />
+                } />
+                <Route path="homework" element={
+                  <HomeworkSection homework={homework} classes={classes} />
+                } />
+                <Route path="exams" element={
+                  <ExamsSection exams={exams} />
+                } />
+                <Route path="progress" element={
+                  <ProgressSection
+                    student={student}
+                    attendance={attendance}
+                    homework={homework}
+                    exams={exams}
+                  />
+                } />
+                <Route path="messages" element={
+                  <CommunicationSection
+                    announcements={announcements}
+                    messages={messages}
+                    studentId={student.id}
+                    studentName={student.name}
+                    onSendMessage={handleSendMessage}
+                  />
+                } />
+                <Route path="profile" element={
+                  <StudentProfileSection studentId={student.id} />
+                } />
+                <Route path="*" element={<Navigate to="dashboard" replace />} />
+              </Routes>
             </motion.div>
           </AnimatePresence>
         </PageContainer>
@@ -209,3 +186,17 @@ export const StudentApp: React.FC<StudentAppProps> = ({ user, onLogout }) => {
     </div>
   );
 };
+
+// Helper to inject useParams dynamically into ClassDetailSection
+import { useParams } from 'react-router-dom';
+function ClassDetailWrapper({ classes, homework }: { classes: any[], homework: any[] }) {
+  const { classId } = useParams();
+  const classObj = classes.find(c => c.id === classId) || null;
+  return (
+    <ClassDetailSection
+      classObj={classObj}
+      homework={homework}
+      loading={false}
+    />
+  );
+}
