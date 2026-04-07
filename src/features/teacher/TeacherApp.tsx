@@ -87,14 +87,15 @@ export function TeacherApp() {
   });
 
   const handleLogout = useCallback(async () => {
-    console.log('[Auth] Logging out...');
+    console.log('[TeacherApp] handleLogout called');
     try {
+      console.log('[TeacherApp] Calling signOut...');
       await signOut();
-      console.log('[Auth] signOut completed');
+      console.log('[TeacherApp] signOut completed');
     } catch (error) {
-      console.error('[Auth] signOut error:', error);
+      console.error('[TeacherApp] signOut error:', error);
     }
-    console.log('[Auth] Redirecting to home...');
+    console.log('[TeacherApp] Redirecting to home...');
     window.location.href = '/';
   }, [signOut]);
 

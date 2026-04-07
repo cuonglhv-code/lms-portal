@@ -81,7 +81,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </div>
           </div>
           <button 
-            onClick={onLogout}
+            onClick={async () => { try { await onLogout(); } catch (e) { console.error('Logout error:', e); } }}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             aria-label="Sign out"
             type="button"
