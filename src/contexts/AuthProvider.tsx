@@ -44,6 +44,20 @@ const ADMIN_EMAILS = new Set([
   'lecuong.ueh@gmail.com',
 ]);
 
+async function isAdminFromDb(supabaseUser: SupabaseUser): Promise<boolean> {
+  try {
+    const { data: admin } = await supabase
+      .from('admins')
+      .select('id')
+      .eq('email', supabaseUser.email?.toLowerCase())
+      .eq('is_active', true)
+      .maybeSingle();
+    return !!admin;
+  } catch {
+    return false;
+  }
+}
+
 const AUTH_TIMEOUT_MS = 5000;
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
@@ -58,7 +72,9 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: 
 async function detectUserRole(supabaseUser: SupabaseUser): Promise<UserRole> {
   const email = supabaseUser.email?.toLowerCase() || '';
   
-  if (ADMIN_EMAILS.has(email)) {
+  // Check DB-based admins first (RLS v2)
+  const isAdmin = await isAdminFromDb(supabaseUser);
+  if (isAdmin || ADMIN_EMAILS.has(email)) {
     return UserRole.Admin;
   }
   
