@@ -46,12 +46,18 @@ const ADMIN_EMAILS = new Set([
 
 async function isAdminFromDb(supabaseUser: SupabaseUser): Promise<boolean> {
   try {
-    const { data: admin } = await supabase
+    const { data: admin, error } = await supabase
       .from('admins')
       .select('id')
       .eq('email', supabaseUser.email?.toLowerCase())
       .eq('is_active', true)
       .maybeSingle();
+    
+    // If table doesn't exist (404) or other error, return false
+    if (error && error.code !== 'PGRST116') {
+      console.log('[Auth] Admins table check failed, using fallback:', error.message);
+      return false;
+    }
     return !!admin;
   } catch {
     return false;
